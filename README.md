@@ -6,7 +6,7 @@ initial draft of vscode extension for nginx, mainly nginx instance manager (NIM)
 
 Initial integration to be done through NIM
 
-<img src="./images/vscode-nim_3.22.2021_01.png" alt="drawing" width="40%"/>
+<img src="./images/vscode-nim_3.22.2021_01.png" alt="drawing" width="60%"/>
 
 ## Getting Started
 
