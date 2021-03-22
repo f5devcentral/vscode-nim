@@ -1,0 +1,142 @@
+{
+	"name": "vscode-nginx",
+	"displayName": "F5 NGINX",
+	"description": "NGINX Instance Manager integration",
+	"version": "0.1.0-beta.1",
+	"license": "Apache-2.0",
+	"publisher": "F5DevCentral",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/f5devcentral/vscode-nginx"
+	},
+	"engines": {
+		"vscode": "^1.34.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"configuration": {
+			"title": "f5-nginx",
+			"properties": {
+				"f5.nginx.hosts": {
+					"type": "array",
+					"description": "NGINX Hosts details",
+					"items": {
+						"type": "object",
+						"properties": {
+							"device": {
+								"type": "string",
+								"description": "nginx dude to connect to",
+								"pattern": "^[\\w-.]+$"
+							},
+							"port": {
+								"type": "number",
+								"description": "port to connect to nginx host"
+							}
+						}
+					},
+					"required": [
+						"device"
+					]
+				}
+			}
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "f5-nginx-view-container",
+					"title": "NGINX",
+					"icon": "images/NGINX-product-icon-white.svg"
+				}
+			]
+		},
+		"views": {
+			"f5-nginx-view-container":[
+				{
+					"id": "Hosts",
+					"name":"HOSTS"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "nginx.refreshHostsTree",
+				"title": "Refresh Devices",
+				"category": "NGINX",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "nginx.addHost",
+				"title": "Add Host",
+				"category": "NGINX",
+				"icon": "$(add)"
+			},
+			{
+				"command": "nginx.editHost",
+				"title": "Edit Host",
+				"category": "NGINX",
+				"icon": "$(edit)"
+			},
+			{
+				"command": "nginx.removeHost",
+				"title": "Remove Host",
+				"category": "NGINX",
+				"icon": "$(trash)"
+			},
+			{
+				"command": "nginx.connect",
+				"title": "Connect to NIM",
+				"category": "NGINX"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "nginx.addHost",
+					"when": "view == Hosts",
+					"group": "navigation"
+				},
+				{
+					"command": "nginx.refreshHostsTree",
+					"when": "view == Hosts",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "nginx.editHost",
+					"when": "view == Hosts && viewItem == host",
+					"group": "inline"
+				},
+				{
+					"command": "nginx.removeHost",
+					"when": "view == Hosts && viewItem == host",
+					"group": "inline"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint . --ext .ts,.tsx",
+		"watch": "tsc -watch -p ./"
+	},
+	"devDependencies": {
+		"@types/node": "^14.14.35",
+		"@types/vscode": "^1.34.0",
+		"@typescript-eslint/eslint-plugin": "^4.19.0",
+		"@typescript-eslint/parser": "^4.19.0",
+		"eslint": "^7.11.0",
+		"typescript": "^4.0.2"
+	},
+	"dependencies": {
+		"f5-conx-core": "github:dumpysquare/f5-conx-core",
+		"latest": "^0.2.0"
+	}
+}

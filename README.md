@@ -1,37 +1,44 @@
-# Solutions Engineering Template Repository
-A template repository that contains all required files (LICENSE, SUPPORT, CONTRIBUTING, etc) as outlined in the org standards.  
+# vscode-nginx
 
-
-The sections below are recommended in your project's README.md file. 
+initial draft of vscode extension for nginx, mainly nginx instance manager (NIM)
 
 ## Overview
-Provide a short overview of the project.
+
+Initial integration to be done through NIM
+
+<img src="./images/vscode-nim_3.22.2021_01.png" alt="drawing" width="40%"/>
 
 ## Getting Started
-Provide a quick example of how to use your code.  This should provide the user with a launch point to quickly see what the project can offer them. 
+
+in progress...
 
 ## Installation
-Outline the requirements and steps to install this project. 
+
+None at this time
 
 ## Usage
-Outline how the user can use your project and the various features the project offers. 
+
+"this is not the extension your looking for..."
 
 ## Development
-Outline any requirements to setup a development environment if someone would like to contribute.  You may also link to another file for this information. 
+
+Know TS?
 
 ## Support
+
 For support, please open a GitHub issue.  Note, the code in this repository is community supported and is not supported by F5 Networks.  For a complete list of supported projects please reference [SUPPORT.md](SUPPORT.md).
 
 ## Community Code of Conduct
+
 Please refer to the [F5 DevCentral Community Code of Conduct](code_of_conduct.md).
 
-
 ## License
+
 [Apache License 2.0](LICENSE)
 
 ## Copyright
-Copyright 2014-2020 F5 Networks Inc.
 
+Copyright 2014-2020 F5 Networks Inc.
 
 ### F5 Networks Contributor License Agreement
 
