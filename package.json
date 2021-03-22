@@ -58,8 +58,16 @@
 		"views": {
 			"f5-nginx-view-container":[
 				{
-					"id": "Hosts",
+					"id": "hostsView",
 					"name":"HOSTS"
+				},
+				{
+					"id": "inventoryView",
+					"name":"INVENTORY"
+				},
+				{
+					"id": "scanView",
+					"name":"scan"
 				}
 			]
 		},
@@ -98,24 +106,24 @@
 			"view/title": [
 				{
 					"command": "nginx.addHost",
-					"when": "view == Hosts",
+					"when": "view == hostsView",
 					"group": "navigation"
 				},
 				{
 					"command": "nginx.refreshHostsTree",
-					"when": "view == Hosts",
+					"when": "view == hostsView",
 					"group": "navigation"
 				}
 			],
 			"view/item/context": [
 				{
 					"command": "nginx.editHost",
-					"when": "view == Hosts && viewItem == host",
+					"when": "view == hostsView && viewItem == host",
 					"group": "inline"
 				},
 				{
 					"command": "nginx.removeHost",
-					"when": "view == Hosts && viewItem == host",
+					"when": "view == hostsView && viewItem == host",
 					"group": "inline"
 				}
 			]

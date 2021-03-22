@@ -20,6 +20,8 @@ import * as os from 'os';
 import Logger from 'f5-conx-core/dist/logger';
 import { NginxHostTreeProvider } from './hostsTreeProvider';
 import Settings from './Settings';
+import { InventoryTreeProvider } from './inventoryTreeProvider';
+import { scanTreeProvider } from './scanTreeProvider';
 
 const logger = new Logger();
 
@@ -33,7 +35,7 @@ export function activate(context: ExtensionContext) {
         nginxHostsTree.refresh();
     });
     
-    logger.info(`Host details: `, {
+    logger.info(`NIM Host details: `, {
         hostOS: os.type(),
         platform: os.platform(),
         release: os.release(),
@@ -44,7 +46,7 @@ export function activate(context: ExtensionContext) {
 
 
     const nginxHostsTree = new NginxHostTreeProvider(context, settings, logger);
-    const hostsTreeView = window.createTreeView('Hosts', {
+    const hostsTreeView = window.createTreeView('hostsView', {
         treeDataProvider: nginxHostsTree,
         showCollapseAll: true
     });
@@ -68,5 +70,21 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(commands.registerCommand('nginx.connect', async () => {
 
     }));
+
+
+
+    const inventoryTree = new InventoryTreeProvider(context);
+    const inventoryTreeView = window.createTreeView('inventoryView', {
+        treeDataProvider: inventoryTree,
+        showCollapseAll: true
+    });
+    inventoryTreeView.message = 'static for now, but should only show when connected to a NIM';
+
+    const scanTree = new scanTreeProvider(context);
+    const scanTreeView = window.createTreeView('scanView', {
+        treeDataProvider: scanTree,
+        showCollapseAll: true
+    });
+    scanTreeView.message = 'same as inventory tree view';
 
 }
