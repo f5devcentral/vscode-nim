@@ -25,6 +25,7 @@ import {
     window,
     workspace
 } from 'vscode';
+import { NimClient } from './nimClient';
 
 // import jsyaml from "js-yaml";
 
@@ -34,7 +35,8 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     private _onDidChangeTreeData: EventEmitter<InvTreeItem | undefined> = new EventEmitter<InvTreeItem | undefined>();
     readonly onDidChangeTreeData: Event<InvTreeItem | undefined> = this._onDidChangeTreeData.event;
     context: ExtensionContext;
-    inventory: any;
+    nim: NimClient | undefined;
+    inventory: any[] = [];
 
     constructor(context: ExtensionContext) {
         this.context = context;
@@ -44,7 +46,8 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     /**
      * refresh tree view
      */
-    refresh() {
+    async refresh() {
+        await this.getInventory();
         this._onDidChangeTreeData.fire(undefined);
     }
 
@@ -62,21 +65,15 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
         } else {
 
-            // // this.refreshData();
-            // await Promise.all([
-            //     this.getGlobalApps(),
-            //     this.getTemplates(),
-            //     this.getDevices(),
-            //     this.getScripts(),
-            //     this.getExecutedScripts()
-            // ]);
+            if(this.inventory.length > 0) {
+                this.inventory.map( (el: any) => {
+                    // treeItems.push(new InvTreeItem(
+                        
+                    // ))
+                    const x = el;
+                });
+            }
 
-            // todo: build count and hover details
-            treeItems.push(
-                new InvTreeItem('inst1', '', '', '', TreeItemCollapsibleState.Collapsed),
-                new InvTreeItem('inst2', '', '', '', TreeItemCollapsibleState.Collapsed),
-                new InvTreeItem('inst3', '', '', '', TreeItemCollapsibleState.Collapsed),
-            );
         }
         return treeItems;
     }
@@ -86,6 +83,10 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
      */
     private async getInventory() {
         this.inventory.length = 0;
+        this.nim?.makeRequest(this.nim.api.instances)
+        .then( resp => {
+            this.inventory = resp.data;
+        });
     }
 
 

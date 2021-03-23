@@ -22,10 +22,16 @@ import { NginxHostTreeProvider } from './hostsTreeProvider';
 import Settings from './Settings';
 import { InventoryTreeProvider } from './inventoryTreeProvider';
 import { scanTreeProvider } from './scanTreeProvider';
+import { NimClient } from './nimClient';
+// import EventEmitter from 'node:events';
+import { EventEmitter } from 'events';
 
 const logger = new Logger();
+// logger.output = 
 
 export function activate(context: ExtensionContext) {
+
+    const eventer = new EventEmitter();
 
     const settings = new Settings(context);
     
@@ -42,7 +48,7 @@ export function activate(context: ExtensionContext) {
         userInfo: `${JSON.stringify(os.userInfo())}`
     });
 
-
+    let nim: NimClient | undefined;
 
 
     const nginxHostsTree = new NginxHostTreeProvider(context, settings, logger);
@@ -67,7 +73,18 @@ export function activate(context: ExtensionContext) {
         return await nginxHostsTree.editDevice(hostID);
     }));
 
-    context.subscriptions.push(commands.registerCommand('nginx.connect', async () => {
+    context.subscriptions.push(commands.registerCommand('nginx.connect', async (host) => {
+
+        nim = new NimClient(host.device, eventer);
+
+        await nim.connect()
+        .then( () => {
+            inventoryTree.nim = nim;
+            inventoryTree.refresh();
+        })
+        .catch( err => {
+            logger.error('nim connect failed', err);
+        });
 
     }));
 

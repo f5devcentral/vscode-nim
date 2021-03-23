@@ -98,7 +98,7 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 					'host',
 					TreeItemCollapsibleState.None,
 					{
-						command: 'f5.nginx.connect',
+						command: 'nginx.connect',
 						title: 'hostTitle',
 						arguments: [item]
 					}

@@ -56,18 +56,18 @@
 			]
 		},
 		"views": {
-			"f5-nginx-view-container":[
+			"f5-nginx-view-container": [
 				{
 					"id": "hostsView",
-					"name":"HOSTS"
+					"name": "HOSTS"
 				},
 				{
 					"id": "inventoryView",
-					"name":"INVENTORY"
+					"name": "INVENTORY"
 				},
 				{
 					"id": "scanView",
-					"name":"scan"
+					"name": "scan"
 				}
 			]
 		},
@@ -144,6 +144,7 @@
 		"typescript": "^4.0.2"
 	},
 	"dependencies": {
+		"axios": "^0.21.1",
 		"f5-conx-core": "github:dumpysquare/f5-conx-core",
 		"latest": "^0.2.0"
 	}
