@@ -8,6 +8,8 @@
 		"outDir": "out",
 		"sourceMap": true,
 		"rootDir": "src",
+		"removeComments": false,
+		"moduleResolution": "node",
 		"resolveJsonModule": true,
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,

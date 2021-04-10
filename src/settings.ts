@@ -22,11 +22,13 @@ export type NginxHost = {
  * **not actually used yet, the hosts tree is pulling hosts config directly...**
  */
 export default class Settings {
+    protected logLevel;
 
     hosts: NginxHost[] = [];
 
     constructor(context: ExtensionContext) {
         // boogers
+        this.logLevel = process.env.F5_CONX_CORE_LOG_LEVEL || 'INFO';
         this.init();
     }
 
@@ -35,13 +37,16 @@ export default class Settings {
      * load settings from extension settings file
      */
     async load() {
+
         this.hosts = workspace.getConfiguration().get('f5.nginx.hosts') || [];
+        process.env.F5_CONX_CORE_LOG_LEVEL = workspace.getConfiguration().get('f5.nginx.logLevel', 'INFO');
+        this.logLevel = process.env.F5_CONX_CORE_LOG_LEVEL;
     }
 
     /**
      * initialize settings at launch
      */
     async init() {
-
+        this.load();
     }
 }

@@ -8,16 +8,30 @@
 
 'use strict';
 
-import path from 'path';
-import https from 'https';
-import * as fs from 'fs';
-
+import http, { IncomingMessage, RequestOptions } from 'http';
+import timer from '@szmarczak/http-timer/dist/source';
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { HttpResponse } from 'f5-conx-core';
+import { AxiosResponseWithTimings, getRandomUUID, HttpResponse } from 'f5-conx-core';
 import { EventEmitter } from 'events';
-// import { uuidAxiosRequestConfig } from 'f5-conx-core';
+import { uuidAxiosRequestConfig } from 'f5-conx-core';
+import { URL } from 'url';
+import { nimLicense, nimSystem } from './nimModels';
 
+type nodeReq = [url: string | URL, options: RequestOptions, callback?: ((res: IncomingMessage) => void) | undefined];
+
+/**
+ * Used to inject http call timers
+ * transport:request: httpsWithTimer
+ * @szmarczak/http-timer
+ */
+ const transport = {
+    request: function httpsWithTimer(...args: nodeReq): uuidAxiosRequestConfig {
+        const request = http.request.apply(null, args);
+        timer(request);
+        return request as uuidAxiosRequestConfig;
+    }
+};
 
 /**
  * F5 connectivity mgmt client
@@ -51,16 +65,24 @@ export class NimClient {
      */
     axios: AxiosInstance;
 
+    /**
+     * license details from nim instance
+     */
+    license: nimLicense | undefined;
+
+    /**
+     * system details from nim instance
+     */
+    system: nimSystem | undefined;
+
 
     readonly api = {
-        license: '​/api​/v0​/about​/license',
-        system: '​/api​/v0​/about​/system',
-        analyze: '/api​/v0​/system/analyze',
-        instances: '/api​/v0​/instances',
-        scan: '/api​/v0​/scan',
+        license: '/api/v0/about/license',
+        system: '/api/v0/about/system',
+        analyze: '/api/v0/system/analyze',
+        instances: '/api/v0/instances',
+        scan: '/api/v0/scan'
     };
-    license: any;
-    system: any;
 
 
 
@@ -90,11 +112,11 @@ export class NimClient {
      */
     private createAxiosInstance(): AxiosInstance {
 
-        const baseInstanceParams: AxiosRequestConfig = {
-            baseURL: `http://${this.host}`,
-            // baseURL: this.host,
+        const baseInstanceParams: uuidAxiosRequestConfig = {
+            baseURL: `http://${this.host}:${this.port}`,
+            transport
         };
-
+        
         // create axsios instance
         const axInstance = axios.create(baseInstanceParams);
 
@@ -103,12 +125,14 @@ export class NimClient {
 
         // ---- https://github.com/axios/axios#interceptors
         // Add a request interceptor
-        axInstance.interceptors.request.use(function (config: AxiosRequestConfig) {
+        axInstance.interceptors.request.use(function (config: uuidAxiosRequestConfig) {
 
             // adjust tcp timeout, default=0, which relys on host system
             config.timeout = Number(process.env.F5_CONX_CORE_TCP_TIMEOUT);
 
-            events.emit('log-info', `HTTP-REQU: ${config.method} -> ${config.baseURL}${config.url}`);
+            config.uuid = config?.uuid ? config.uuid : getRandomUUID(4, { simple: true });
+
+            events.emit('log-http-request', config);
 
             return config;
         }, function (err) {
@@ -118,11 +142,11 @@ export class NimClient {
         });
 
         //  response interceptor
-        axInstance.interceptors.response.use(function (resp: AxiosResponse) {
+        axInstance.interceptors.response.use(function (resp: AxiosResponseWithTimings) {
             // Any status code that lie within the range of 2xx cause this function to trigger
             // Do something with response data
 
-            events.emit('log-info', `HTTP-RESP: ${resp.status} - ${resp.statusText}`);
+            events.emit('log-http-response', resp);
 
             return resp;
         }, function (err) {
@@ -155,17 +179,20 @@ export class NimClient {
      * 
      * @returns request response
      */
-    async makeRequest(uri: string, options?: AxiosRequestConfig): Promise<AxiosResponse> {
+    async makeRequest(url: string, options: AxiosRequestConfig = {}): Promise<AxiosResponseWithTimings> {
 
         // add any request defaults needed here
-        const requestDefaults = {
-            url: uri,
-        };
+        // const requestDefaults = {
+        //     url: url,
+        // };
 
-        // merge incoming options into requestDefaults object
-        options = Object.assign(requestDefaults, options);
+        // // merge incoming options into requestDefaults object
+        // options = Object.assign(requestDefaults, options);
 
-        return await this.axios.request(options);
+        // options.url = `http://${this.host}:${this.port}${url}`;
+        options.url = url;
+
+        return await this.axios(options);
     }
 
 
@@ -177,60 +204,15 @@ export class NimClient {
         .then(resp => {
             this.license = resp.data;
         });
+
+        await this.makeRequest(this.api.system)
+        .then( resp => {
+            this.system = resp.data;
+        });
         
-        // await this.makeRequest(this.api.system)
-        // .then( resp => {
-        //     this.system = resp.data;
-        // });
     }
 
 
 
-    // instances = 
-
-
 }
-
-
-/**
- * returns simplified http response object
- * 
- * ```ts
- *     return {
- *      data: resp.data,
- *      headers: resp.headers,
- *      status: resp.status,
- *      statusText: resp.statusText,
- *      request: {
- *          uuid: resp.config.uuid,
- *          baseURL: resp.config.baseURL,
- *          url: resp.config.url,
- *          method: resp.request.method,
- *          headers: resp.config.headers,
- *          protocol: resp.config.httpsAgent.protocol,
- *          timings: resp.request.timings
- *      }
- *  }
- * ```
- * @param resp orgininal axios response with timing
- * @returns simplified http response
- */
-export async function simplifyHttpResponse(resp: AxiosResponse): Promise<any> {
-    // only return the things we need
-    return {
-        data: resp.data,
-        headers: resp.headers,
-        status: resp.status,
-        statusText: resp.statusText,
-        request: {
-            baseURL: resp.config.baseURL,
-            url: resp.config.url,
-            method: resp.request.method,
-            headers: resp.config.headers,
-            protocol: resp.config.httpsAgent.protocol,
-            timings: resp.request.timings
-        }
-    };
-}
-
 

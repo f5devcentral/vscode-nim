@@ -14,18 +14,14 @@ import {
     EventEmitter,
     ExtensionContext,
     MarkdownString,
-    Position,
-    Range,
-    TextDocument,
     TreeDataProvider,
     TreeItem,
     TreeItemCollapsibleState,
-    Uri,
-    ViewColumn,
-    window,
-    workspace
 } from 'vscode';
 import { NimClient } from './nimClient';
+import { Instance } from './nimModels';
+import jsYaml from 'js-yaml';
+import { extensionLogger } from './logger';
 
 // import jsyaml from "js-yaml";
 
@@ -36,10 +32,12 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     readonly onDidChangeTreeData: Event<InvTreeItem | undefined> = this._onDidChangeTreeData.event;
     context: ExtensionContext;
     nim: NimClient | undefined;
-    inventory: any[] = [];
+    inventory: Instance[] = [];
+    logger: extensionLogger;
 
-    constructor(context: ExtensionContext) {
+    constructor(context: ExtensionContext, logger: extensionLogger) {
         this.context = context;
+        this.logger = logger;
     }
 
 
@@ -51,6 +49,11 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
         this._onDidChangeTreeData.fire(undefined);
     }
 
+    async clear() {
+        this.nim = undefined;
+        this.inventory.length = 0;
+    }
+
     getTreeItem(element: InvTreeItem): TreeItem {
         return element;
     }
@@ -58,6 +61,10 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     async getChildren(element?: InvTreeItem) {
         let treeItems: InvTreeItem[] = [];
 
+        if(!this.nim) {
+            // not connected, so don't try to populate anything
+            return treeItems;
+        }
 
         if (element) {
 
@@ -66,11 +73,15 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
         } else {
 
             if(this.inventory.length > 0) {
-                this.inventory.map( (el: any) => {
-                    // treeItems.push(new InvTreeItem(
-                        
-                    // ))
-                    const x = el;
+                this.inventory.map( (el: Instance) => {
+
+                    const txt = jsYaml.dump(el, {indent: 4});
+                    const tooltip = new MarkdownString()
+                    .appendCodeblock(txt, 'yaml');
+
+                    treeItems.push(new InvTreeItem(
+                        el.hostname, '', tooltip, "instance", TreeItemCollapsibleState.None
+                    ));
                 });
             }
 

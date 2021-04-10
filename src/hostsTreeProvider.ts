@@ -24,7 +24,7 @@ import {
     window,
 	workspace
 } from 'vscode';
-import Settings, { NginxHost } from './Settings';
+import Settings, { NginxHost } from './settings';
 
 // icon listing for addin icons to key elements
 // https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
@@ -147,7 +147,7 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 	async editDevice(hostID: NginxHostTreeItem) {
         this.logger.debug(`Edit Host command:`, hostID);
 
-        window.showInputBox({
+        await window.showInputBox({
             prompt: 'Update Device/BIG-IP/Host',
             value: hostID.label,
             ignoreFocusOut: true

@@ -14,19 +14,14 @@ import {
     EventEmitter,
     ExtensionContext,
     MarkdownString,
-    Position,
-    Range,
-    TextDocument,
     TreeDataProvider,
     TreeItem,
     TreeItemCollapsibleState,
-    Uri,
-    ViewColumn,
-    window,
-    workspace
 } from 'vscode';
+import { NimClient } from './nimClient';
 
-// import jsyaml from "js-yaml";
+import jsYaml from "js-yaml";
+import { extensionLogger } from './logger';
 
 
 export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
@@ -34,10 +29,13 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
     private _onDidChangeTreeData: EventEmitter<ScanTreeItem | undefined> = new EventEmitter<ScanTreeItem | undefined>();
     readonly onDidChangeTreeData: Event<ScanTreeItem | undefined> = this._onDidChangeTreeData.event;
     context: ExtensionContext;
-    scanItems: any;
+    nim: NimClient | undefined;
+    scanServers: any[] = [];
+    logger: extensionLogger;
 
-    constructor(context: ExtensionContext) {
+    constructor(context: ExtensionContext, logger: extensionLogger) {
         this.context = context;
+        this.logger = logger;
     }
 
 
@@ -48,6 +46,11 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
         this._onDidChangeTreeData.fire(undefined);
     }
 
+    async clear() {
+        this.nim = undefined;
+        this.scanServers.length = 0;
+    }
+
     getTreeItem(element: ScanTreeItem): TreeItem {
         return element;
     }
@@ -55,6 +58,10 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
     async getChildren(element?: ScanTreeItem) {
         let treeItems: ScanTreeItem[] = [];
 
+        if(!this.nim) {
+            // not connected, so don't try to populate anything
+            return treeItems;
+        }
 
         if (element) {
 
@@ -73,7 +80,7 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
 
             // todo: build count and hover details
             treeItems.push(
-                new ScanTreeItem('found1', '', '', '', TreeItemCollapsibleState.Collapsed),
+                new ScanTreeItem('Start', '', '', '', TreeItemCollapsibleState.None),
                 new ScanTreeItem('found2', '', '', '', TreeItemCollapsibleState.Collapsed),
                 new ScanTreeItem('found3', '', '', '', TreeItemCollapsibleState.Collapsed),
             );
@@ -82,15 +89,48 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
     }
 
     /**
-     * fetch bigiq managed device information
+     * get scan status
      */
-    private async getInventory() {
-        this.scanItems.length = 0;
+    private async scanResults() {
+        this.scanServers.length = 0;
+
+        this.nim?.makeRequest(this.nim.api.scan)
+        .then( resp => {
+            // this.scanDetails = resp.data;
+
+        });
+    }
+
+    /**
+     * get scan status
+     */
+    async scanStart(data: string) {
+
+        // let data;
+        try {
+            data = JSON.parse(data);
+        } catch (e) {
+            throw e;
+        }
+
+        // this.scanServers.length = 0;
+
+        this.nim?.makeRequest(this.nim.api.scan, {
+            method: 'POST',
+            data
+        })
+        .then( resp => {
+            // just log that the scan is running?
+            this.logger.debug('nim scan job start', resp);
+        });
+
     }
 
 
 
 }
+
+export type ScanType = "START" | "STATUS" | 'CANCEL';
 
 
 /**
