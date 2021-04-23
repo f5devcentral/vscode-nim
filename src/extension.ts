@@ -1,18 +1,27 @@
-/*
- * Copyright 2020. F5 Networks, Inc. See End User License Agreement ("EULA") for
- * license terms. Notwithstanding anything to the contrary in the EULA, Licensee
- * may copy and modify this software product for its internal business purposes.
- * Further, Licensee may upload, publish and distribute the modified version of
- * the software product on devcentral.f5.com.
+/**
+ * Copyright 2021 F5 Networks, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-'use strict';
+ 'use strict';
 
 import {
     ExtensionContext,
     commands,
     window,
     workspace,
+    ProgressLocation,
 } from 'vscode';
 
 import * as os from 'os';
@@ -25,6 +34,11 @@ import { extensionLogger } from './logger';
 import { NimClient } from './nimClient';
 import { EventEmitter } from 'events';
 
+import { getPassword } from './utils'
+
+
+// https://stackoverflow.com/questions/51070138/how-to-import-package-json-into-typescript-file-without-including-it-in-the-comp
+// import * as pkjs from '../package.json'
 
 const logger = new extensionLogger();
 logger.console = false;
@@ -34,7 +48,7 @@ logger.console = false;
 // create OUTPUT channel
 const f5OutputChannel = window.createOutputChannel('nginx');
 // make visible
-f5OutputChannel.show();
+// f5OutputChannel.show();
 // inject vscode output into logger
 logger.output = function (log: string) {
     f5OutputChannel.appendLine(log);
@@ -58,7 +72,8 @@ export function activate(context: ExtensionContext) {
         // nginxHostsTree.refresh();
     });
 
-    logger.info(`Extension Host details: `, {
+    // todo: add extra package details!
+    logger.info(`nginx Extension Host details: `, {
         hostOS: os.type(),
         platform: os.platform(),
         release: os.release(),
@@ -79,7 +94,9 @@ export function activate(context: ExtensionContext) {
     }));
 
     context.subscriptions.push(commands.registerCommand('nginx.addHost', async (newHost) => {
-        return await nginxHostsTree.addDevice(newHost);
+
+        commands.executeCommand('workbench.action.openSettingsJson', 'nginx');
+        // return await nginxHostsTree.addDevice(newHost);
     }));
 
     context.subscriptions.push(commands.registerCommand('nginx.removeHost', async (hostID) => {
@@ -94,23 +111,37 @@ export function activate(context: ExtensionContext) {
 
         commands.executeCommand('nginx.disConnect');
 
-        nim = new NimClient(host.device, eventer);
+        // if (host.auth.basic) {
+        //     getPassword(host.device)
+        // }
 
-        await nim.connect()
-            .then(() => {
-                commands.executeCommand('setContext', 'nim.connected', true);
-                inventoryTree.nim = nim;
-                inventoryTreeView.message = "connected";
-                inventoryTree.refresh();
+        // curl -sku ted:benrocks https://dc0bec8a-1378-477d-b1a1-af6f87fbd190.access.udf.f5.com/api/v0/about/license
 
-                scanTree.nim = nim;
-                scanTreeView.message = "connected";
-                scanTree.refresh();
-                // debugger;
-            })
-            .catch(err => {
-                logger.error('nim connect failed', err);
-            });
+        await window.withProgress({
+            location: ProgressLocation.Notification,
+            title: `Connecting to NIM`,
+            cancellable: true
+        }, async () => {
+
+            nim = new NimClient(host, eventer);
+    
+            await nim.connect()
+                .then(() => {
+                    commands.executeCommand('setContext', 'nim.connected', true);
+                    inventoryTree.nim = nim;
+                    inventoryTreeView.message = "connected";
+                    inventoryTree.refresh();
+    
+                    scanTree.nim = nim;
+                    scanTreeView.message = "connected";
+                    scanTree.refresh();
+                    // debugger;
+                })
+                .catch(err => {
+                    logger.error('nim connect failed', err);
+                });
+        });
+        
 
     }));
 

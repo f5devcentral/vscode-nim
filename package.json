@@ -40,9 +40,30 @@
 								"description": "nginx dude to connect to",
 								"pattern": "^[\\w-.]+$"
 							},
+							"label": {
+								"type": "string"
+							},
 							"port": {
 								"type": "number",
 								"description": "port to connect to nginx host"
+							},
+							"auth": {
+								"basic": {
+									"username": "string",
+									"password": "string"
+								},
+								"cert": {
+									"type": "string"
+								},
+								"token": {
+									"type": "object",
+									"username": {
+										"type": "string"
+									},
+									"password": {
+										"type": "string"
+									}
+								}
 							},
 							"system": {
 								"type": "object"
@@ -104,7 +125,7 @@
 				"command": "nginx.addHost",
 				"title": "Add Host",
 				"category": "NGINX",
-				"icon": "$(add)"
+				"icon": "$(gear)"
 			},
 			{
 				"command": "nginx.editHost",
@@ -181,6 +202,7 @@
 		"@types/js-yaml": "^4.0.0",
 		"axios": "^0.21.1",
 		"f5-conx-core": "github:dumpysquare/f5-conx-core",
-		"js-yaml": "^4.0.0"
+		"js-yaml": "^4.0.0",
+		"keytar": "^7.6.0"
 	}
 }

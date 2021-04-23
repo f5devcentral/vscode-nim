@@ -1,14 +1,23 @@
-/*
- * Copyright 2020. F5 Networks, Inc. See End User License Agreement ("EULA") for
- * license terms. Notwithstanding anything to the contrary in the EULA, Licensee
- * may copy and modify this software product for its internal business purposes.
- * Further, Licensee may upload, publish and distribute the modified version of
- * the software product on devcentral.f5.com or github.com/f5devcentral.
+/**
+ * Copyright 2021 F5 Networks, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-'use strict';
+ 'use strict';
 
 import Logger from 'f5-conx-core/dist/logger';
+import jsYaml from 'js-yaml';
 import path = require('path');
 import {
 	Command,
@@ -65,6 +74,7 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 	}
 
 	async refresh(): Promise<void> {
+		this.loadHosts();
 		this._onDidChangeTreeData.fire(undefined);
 	}
 
@@ -85,13 +95,15 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 			// return treeItems;
 		} else {
 
-			treeItems.push(...this.nginxHosts.map((item: any) => {
+			this.nginxHosts.forEach((item: NginxHost) => {
 
-                const tooltip = new MarkdownString("# device meta-data stuff")
-                .appendCodeblock('version: 1.11.3\nuptime: 3.14', 'yaml');
+				
+
+                const tooltip = new MarkdownString(`## ${item.device}\n---\n`)
+                .appendCodeblock(jsYaml.dump(item), 'yaml');
 
 				const treeItem = new NginxHostTreeItem(
-					item.device,
+					(item.label || item.device),
 					'description...',
 					tooltip,
 					this.green,
@@ -104,8 +116,8 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 					}
 				);
 
-				return treeItem;
-			}));
+				treeItems.push(treeItem);
+			});
 
 		}
         return Promise.resolve(treeItems);

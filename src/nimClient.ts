@@ -1,14 +1,23 @@
-/*
- * Copyright 2020. F5 Networks, Inc. See End User License Agreement ("EULA") for
- * license terms. Notwithstanding anything to the contrary in the EULA, Licensee
- * may copy and modify this software product for its internal business purposes.
- * Further, Licensee may upload, publish and distribute the modified version of
- * the software product on devcentral.f5.com.
+/**
+ * Copyright 2021 F5 Networks, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-'use strict';
+ 'use strict';
 
 import http, { IncomingMessage, RequestOptions } from 'http';
+import https from 'https';
 import timer from '@szmarczak/http-timer/dist/source';
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
@@ -17,6 +26,8 @@ import { EventEmitter } from 'events';
 import { uuidAxiosRequestConfig } from 'f5-conx-core';
 import { URL } from 'url';
 import { nimLicense, nimSystem } from './nimModels';
+import { NginxHost } from './settings';
+import { getPassword, savePassword } from './utils';
 
 type nodeReq = [url: string | URL, options: RequestOptions, callback?: ((res: IncomingMessage) => void) | undefined];
 
@@ -46,7 +57,8 @@ export class NimClient {
     /**
      * hostname or IP address of F5 device
      */
-    host: string;
+    host: NginxHost;
+    password: string | undefined;
     /**
      * tcp port for mgmt connectivity (default=443)
      */
@@ -90,14 +102,11 @@ export class NimClient {
      * @param options function options
      */
     constructor(
-        host: string,
+        host: NginxHost,
         eventEmitter: EventEmitter,
-        options?: {
-            port?: number,
-        },
     ) {
         this.host = host;
-        this.port = options?.port || 80;
+        this.port = host.port || 443;
         this.events = eventEmitter;
         this.axios = this.createAxiosInstance();
     }
@@ -113,7 +122,7 @@ export class NimClient {
     private createAxiosInstance(): AxiosInstance {
 
         const baseInstanceParams: uuidAxiosRequestConfig = {
-            baseURL: `http://${this.host}:${this.port}`,
+            baseURL: `https://${this.host.device}`,
             transport
         };
         
@@ -128,7 +137,7 @@ export class NimClient {
         axInstance.interceptors.request.use(function (config: uuidAxiosRequestConfig) {
 
             // adjust tcp timeout, default=0, which relys on host system
-            config.timeout = Number(process.env.F5_CONX_CORE_TCP_TIMEOUT);
+            config.timeout = Number(process.env.F5_CONX_CORE_TCP_TIMEOUT || 5000);
 
             config.uuid = config?.uuid ? config.uuid : getRandomUUID(4, { simple: true });
 
@@ -181,16 +190,20 @@ export class NimClient {
      */
     async makeRequest(url: string, options: AxiosRequestConfig = {}): Promise<AxiosResponseWithTimings> {
 
-        // add any request defaults needed here
-        // const requestDefaults = {
-        //     url: url,
-        // };
-
         // // merge incoming options into requestDefaults object
         // options = Object.assign(requestDefaults, options);
 
         // options.url = `http://${this.host}:${this.port}${url}`;
         options.url = url;
+
+        if(this.host?.auth?.basic && this.password) {
+            options.auth = {
+                username: this.host.auth.basic,
+                password: this.password
+            }
+        }
+
+        // options.httpsAgent = new https.Agent({ keepAlive: true });
 
         return await this.axios(options);
     }
@@ -200,6 +213,9 @@ export class NimClient {
      * try to connect and gather nim system information
      */
     async connect() {
+
+        this.password = await getPassword(this.host.device);
+
         await this.makeRequest(this.api.license)
         .then(resp => {
             this.license = resp.data;
@@ -209,6 +225,8 @@ export class NimClient {
         .then( resp => {
             this.system = resp.data;
         });
+
+        savePassword(this.host.device, this.password)
         
     }
 

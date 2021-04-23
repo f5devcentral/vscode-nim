@@ -21,6 +21,10 @@
 		// "alwaysStrict": false,
 		// "noImplicitUseStrict": true,
 	},
+	"include": [
+		"src",
+		"package.json"
+	],
 	"exclude": [
 		"node_modules",
 		".vscode-test"
