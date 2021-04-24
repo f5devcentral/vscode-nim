@@ -32,11 +32,19 @@ export type Instance = {
     nginx: {
         bin: string,
         conf: string,
-        type: unknown,
+        type: string,
         version: string
     },
     added: string
 };
+
+export type InstanceConfig = { 
+    name: string; 
+    created: string;
+    modified: string;
+    contents: string; 
+    instance_id: string;
+}
 
 export type nimSystem = {
     grpc_port: string;

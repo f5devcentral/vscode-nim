@@ -106,11 +106,13 @@
 				},
 				{
 					"id": "inventoryView",
-					"name": "INVENTORY"
+					"name": "INVENTORY",
+					"when": "nim.connected"
 				},
 				{
 					"id": "scanView",
-					"name": "scan"
+					"name": "SCAN",
+					"when": "nim.connected"
 				}
 			]
 		},
@@ -123,7 +125,7 @@
 			},
 			{
 				"command": "nginx.addHost",
-				"title": "Add Host",
+				"title": "Hosts Config",
 				"category": "NGINX",
 				"icon": "$(gear)"
 			},
@@ -143,6 +145,18 @@
 				"command": "nginx.connect",
 				"title": "Connect to NIM",
 				"category": "NGINX"
+			},
+			{
+				"command": "nginx.disConnect",
+				"title": "Dis-Connect",
+				"category": "NGINX",
+				"icon": "$(debug-disconnect)"
+			},
+			{
+				"command": "nginx.refreshInventory",
+				"title": "Refresh Inventory",
+				"category": "NGINX",
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "nim.scanStart",
@@ -167,11 +181,21 @@
 					"command": "nginx.refreshHostsTree",
 					"when": "view == hostsView",
 					"group": "navigation"
+				},
+				{
+					"command": "nginx.refreshInventory",
+					"when": "view == inventoryView",
+					"group": "navigation"
 				}
 			],
 			"view/item/context": [
 				{
 					"command": "nginx.editHost",
+					"when": "view == hostsView && viewItem == host",
+					"group": "inline"
+				},
+				{
+					"command": "nginx.disConnect",
 					"when": "view == hostsView && viewItem == host",
 					"group": "inline"
 				},

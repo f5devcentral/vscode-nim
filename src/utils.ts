@@ -17,13 +17,20 @@
  'use strict';
 
 import {
-    window
+    window,
+    SecretStorage
 } from 'vscode';
 import keytar from "keytar";
 // import { logger } from './logger';
 
 
 
+// todo: use new vscode integrated secretes api (it's baked in keytar...)
+// https://stackoverflow.com/questions/66568692/how-to-use-the-vscode-secretstorage
+// https://code.visualstudio.com/api/references/vscode-api#SecretStorage
+// src/tree/registries/registryPasswords.ts
+// https://github.com/microsoft/vscode-docker/commit/fbd25d4bedad5c2360df274c278908d093e6d3cb#diff-79b031eb3ade4f96eb1cfecec2b4f71a2ab8f19a966c3f531e1dcca57bee4341
+// const password = context.secrets.get(host.device)
 
 export async function savePassword (device: string, password: string) {
     // logger

@@ -97,8 +97,6 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 
 			this.nginxHosts.forEach((item: NginxHost) => {
 
-				
-
                 const tooltip = new MarkdownString(`## ${item.device}\n---\n`)
                 .appendCodeblock(jsYaml.dump(item), 'yaml');
 

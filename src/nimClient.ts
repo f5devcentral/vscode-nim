@@ -16,8 +16,9 @@
 
  'use strict';
 
-import http, { IncomingMessage, RequestOptions } from 'http';
-import https from 'https';
+// import http, { IncomingMessage, RequestOptions } from 'http';
+import https, { RequestOptions } from 'https';
+import { IncomingMessage } from 'http';
 import timer from '@szmarczak/http-timer/dist/source';
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
@@ -38,7 +39,7 @@ type nodeReq = [url: string | URL, options: RequestOptions, callback?: ((res: In
  */
  const transport = {
     request: function httpsWithTimer(...args: nodeReq): uuidAxiosRequestConfig {
-        const request = http.request.apply(null, args);
+        const request = https.request.apply(null, args);
         timer(request);
         return request as uuidAxiosRequestConfig;
     }
@@ -137,7 +138,7 @@ export class NimClient {
         axInstance.interceptors.request.use(function (config: uuidAxiosRequestConfig) {
 
             // adjust tcp timeout, default=0, which relys on host system
-            config.timeout = Number(process.env.F5_CONX_CORE_TCP_TIMEOUT || 5000);
+            config.timeout = Number(process.env.F5_CONX_CORE_TCP_TIMEOUT);
 
             config.uuid = config?.uuid ? config.uuid : getRandomUUID(4, { simple: true });
 

@@ -27,14 +27,14 @@ import {
 import * as os from 'os';
 
 import { NginxHostTreeProvider } from './hostsTreeProvider';
-import Settings from './settings';
+import Settings, { NginxHost } from './settings';
 import { InventoryTreeProvider } from './inventoryTreeProvider';
 import { scanTreeProvider } from './scanTreeProvider';
 import { extensionLogger } from './logger';
 import { NimClient } from './nimClient';
 import { EventEmitter } from 'events';
 
-import { getPassword } from './utils'
+import { getText } from './utils'
 
 
 // https://stackoverflow.com/questions/51070138/how-to-import-package-json-into-typescript-file-without-including-it-in-the-comp
@@ -66,6 +66,11 @@ export function activate(context: ExtensionContext) {
 
     const settings = new Settings(context);
 
+    process.on('unhandledRejection', error => {
+		logger.error('unhandledRejection', error);
+	});
+    
+
     workspace.onDidChangeConfiguration(() => {
         logger.info('NGINX EXTENSION SETTINGS CHANGED!');
         settings.load();
@@ -89,6 +94,13 @@ export function activate(context: ExtensionContext) {
         showCollapseAll: true
     });
 
+    hostsTreeView.onDidChangeVisibility( e => {
+        // set this up to respect if onConnect/terminal has been setup
+        if(e.visible) {
+            f5OutputChannel.show();
+        }
+    });
+
     context.subscriptions.push(commands.registerCommand('nginx.refreshHostsTree', () => {
         nginxHostsTree.refresh();
     }));
@@ -107,13 +119,9 @@ export function activate(context: ExtensionContext) {
         return await nginxHostsTree.editDevice(hostID);
     }));
 
-    context.subscriptions.push(commands.registerCommand('nginx.connect', async (host) => {
+    context.subscriptions.push(commands.registerCommand('nginx.connect', async (host: NginxHost) => {
 
         commands.executeCommand('nginx.disConnect');
-
-        // if (host.auth.basic) {
-        //     getPassword(host.device)
-        // }
 
         // curl -sku ted:benrocks https://dc0bec8a-1378-477d-b1a1-af6f87fbd190.access.udf.f5.com/api/v0/about/license
 
@@ -129,12 +137,12 @@ export function activate(context: ExtensionContext) {
                 .then(() => {
                     commands.executeCommand('setContext', 'nim.connected', true);
                     inventoryTree.nim = nim;
-                    inventoryTreeView.message = "connected";
+                    // inventoryTreeView.message = "connected";
                     inventoryTree.refresh();
     
-                    scanTree.nim = nim;
-                    scanTreeView.message = "connected";
-                    scanTree.refresh();
+                    // scanTree.nim = nim;
+                    // scanTreeView.message = "connected";
+                    // scanTree.refresh();
                     // debugger;
                 })
                 .catch(err => {
@@ -150,13 +158,13 @@ export function activate(context: ExtensionContext) {
 
     context.subscriptions.push(commands.registerCommand('nginx.disConnect', async (hostID) => {
 
-        commands.executeCommand('setContext', 'nim.connected', true);
+        commands.executeCommand('setContext', 'nim.connected', false);
 
         inventoryTree.clear();
-        inventoryTreeView.message = "dis-connected";
+        // inventoryTreeView.message = "dis-connected";
 
         scanTree.clear();
-        scanTreeView.message = "dis-connected";
+        // scanTreeView.message = "dis-connected";
         nim = undefined;
     }));
 
@@ -167,7 +175,24 @@ export function activate(context: ExtensionContext) {
         treeDataProvider: inventoryTree,
         showCollapseAll: true
     });
-    inventoryTreeView.message = 'static for now, but should only show when connected to a NIM';
+    // inventoryTreeView.message = 'static for now, but should only show when connected to a NIM';
+
+    context.subscriptions.push(commands.registerCommand('nginx.refreshInventory', () => {
+        inventoryTree.refresh();
+    }));
+
+    context.subscriptions.push(commands.registerCommand('nginx.displayConfigFile', (item) => {
+        // debugger;
+        const decoded = Buffer.from(item.contents, 'base64').toString('ascii');
+        inventoryTree.displayConfig(decoded)
+    }));
+
+
+
+
+
+
+
 
 
 
@@ -191,23 +216,3 @@ export function activate(context: ExtensionContext) {
     }));
 }
 
-/**
- * capture entire active editor text or selected text
- */
-export async function getText(): Promise<string> {
-
-    // get editor window
-    var editor = window.activeTextEditor;
-    if (editor) {
-        // capture selected text or all text in editor
-        if (editor.selection.isEmpty) {
-            return editor.document.getText();	// entire editor/doc window
-        } else {
-            return editor.document.getText(editor.selection);	// highlighted text
-        }
-    } else {
-        logger.warning('getText was called, but no active editor... this should not happen');
-        throw new Error('getText was called, but no active editor... this should not happen'); // No open/active text editor
-    }
-
-}

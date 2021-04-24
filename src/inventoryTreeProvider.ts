@@ -14,14 +14,18 @@ import {
     EventEmitter,
     ExtensionContext,
     MarkdownString,
+    ThemeIcon,
     TreeDataProvider,
     TreeItem,
     TreeItemCollapsibleState,
+    window,
+    workspace,
 } from 'vscode';
 import { NimClient } from './nimClient';
-import { Instance } from './nimModels';
+import { Instance, InstanceConfig, Instances } from './nimModels';
 import jsYaml from 'js-yaml';
 import { extensionLogger } from './logger';
+import { AxiosResponseWithTimings } from 'f5-conx-core';
 
 // import jsyaml from "js-yaml";
 
@@ -32,7 +36,7 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     readonly onDidChangeTreeData: Event<InvTreeItem | undefined> = this._onDidChangeTreeData.event;
     context: ExtensionContext;
     nim: NimClient | undefined;
-    inventory: Instance[] = [];
+    inventory: Instances | undefined;
     logger: extensionLogger;
 
     constructor(context: ExtensionContext, logger: extensionLogger) {
@@ -45,23 +49,27 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
      * refresh tree view
      */
     async refresh() {
-        await this.getInventory();
+        this.inventory = undefined;
+
+        if (this.nim) {
+            await this.getInventory()
+        }
         this._onDidChangeTreeData.fire(undefined);
     }
 
     async clear() {
         this.nim = undefined;
-        this.inventory.length = 0;
+        this.inventory = undefined;
     }
 
-    getTreeItem(element: InvTreeItem): TreeItem {
+    getTreeItem(element: InvTreeItem): InvTreeItem {
         return element;
     }
 
-    async getChildren(element?: InvTreeItem) {
+    async getChildren(element?: InvTreeItem): Promise<InvTreeItem[]> {
         let treeItems: InvTreeItem[] = [];
 
-        if(!this.nim) {
+        if (!this.nim) {
             // not connected, so don't try to populate anything
             return treeItems;
         }
@@ -70,17 +78,64 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
             // get children of selected item
 
+            await this.nim.makeRequest(`${this.nim.api.instances}/${element.id}/config`)
+                .then(resp => {
+
+                    resp.data.files.forEach((el: InstanceConfig) => {
+
+                        const txt = jsYaml.dump({
+                            name: el.name,
+                            created: el.created,
+                            modified: el.modified
+                        }, { indent: 4 });
+
+                        const decoded = Buffer.from(el.contents, 'base64').toString('ascii');
+
+                        const tooltip = new MarkdownString()
+                        .appendCodeblock(txt, 'yaml')
+                        .appendMarkdown('\n---\n')
+                        .appendText(decoded);
+
+                        treeItems.push(
+                            new InvTreeItem(
+                                el.name,
+                                '',
+                                tooltip,
+                                new ThemeIcon('file'),
+                                'instance',
+                                TreeItemCollapsibleState.None,
+                                el.instance_id,
+                                { 
+                                    command: 'nginx.displayConfigFile',
+                                    title: 'asdf',
+                                    arguments: [el]
+                                }
+                            )
+                        );
+                    });
+
+                })
+
+
+
         } else {
 
-            if(this.inventory.length > 0) {
-                this.inventory.map( (el: Instance) => {
+            if (this.inventory && this.inventory.list.length > 0) {
+                this.inventory.list.map((el: Instance) => {
 
-                    const txt = jsYaml.dump(el, {indent: 4});
+                    const txt = jsYaml.dump(el, { indent: 4 });
                     const tooltip = new MarkdownString()
-                    .appendCodeblock(txt, 'yaml');
+                        .appendCodeblock(txt, 'yaml');
 
                     treeItems.push(new InvTreeItem(
-                        el.hostname, '', tooltip, "instance", TreeItemCollapsibleState.None
+                        el.hostname,
+                        (el.nginx.type || ''),
+                        tooltip,
+                        '',
+                        'instance',
+                        TreeItemCollapsibleState.Collapsed,
+                        el.instance_id,
+                        undefined,
                     ));
                 });
             }
@@ -89,18 +144,44 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
         return treeItems;
     }
 
+    // /**
+    //  * fetch inventory information
+    //  */
+    // async getInventory(id: string = ''): Promise<AxiosResponseWithTimings> {
+    //     // this.inventory = undefined;
+    //     const way = await this.nim?.makeRequest(`${this.nim.api.instances}`)
+    //         .then(resp => resp)
+    //         .catch( err => {
+    //             this.logger.error(err)
+    //             return Promise.reject(err)
+    //         });
+
+    //     return way;
+    // }
+
     /**
      * fetch bigiq managed device information
      */
     private async getInventory() {
-        this.inventory.length = 0;
-        this.nim?.makeRequest(this.nim.api.instances)
-        .then( resp => {
-            this.inventory = resp.data;
-        });
+        this.inventory = undefined;
+        await this.nim?.makeRequest(this.nim.api.instances)
+            .then(resp => {
+                this.inventory = resp.data;
+            });
     }
 
-
+    /**
+	 * nginx config in editor
+	 * @param item from tree view click
+	 */
+	async displayConfig(item: any) {
+		
+		// open editor and feed it the content
+		const doc = await workspace.openTextDocument({ content: item, language: 'NGINX' });
+		// make the editor appear
+		await window.showTextDocument( doc, { preview: false });
+		return doc;	// return something for automated testing
+	}
 
 }
 
@@ -128,9 +209,11 @@ class InvTreeItem extends TreeItem {
         public readonly label: string,
         public description: string,
         public tooltip: string | MarkdownString,
+        public iconPath: string | ThemeIcon,
         public contextValue: string,
         public readonly collapsibleState: TreeItemCollapsibleState,
-        public readonly command?: Command
+        public readonly id?: string,
+        public readonly command?: Command,
     ) {
         super(label, collapsibleState);
     }
