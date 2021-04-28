@@ -1,9 +1,17 @@
-/*
- * Copyright 2020. F5 Networks, Inc. See End User License Agreement ("EULA") for
- * license terms. Notwithstanding anything to the contrary in the EULA, Licensee
- * may copy and modify this software product for its internal business purposes.
- * Further, Licensee may upload, publish and distribute the modified version of
- * the software product on devcentral.f5.com or github.com/f5devcentral.
+/**
+ * Copyright 2021 F5 Networks, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 'use strict';
@@ -14,20 +22,22 @@ import {
     EventEmitter,
     ExtensionContext,
     MarkdownString,
+    TextDocument,
     ThemeIcon,
     TreeDataProvider,
     TreeItem,
     TreeItemCollapsibleState,
+    Uri,
     window,
     workspace,
 } from 'vscode';
 import { NimClient } from './nimClient';
 import { Instance, InstanceConfig, Instances } from './nimModels';
 import jsYaml from 'js-yaml';
-import { extensionLogger } from './logger';
-import { AxiosResponseWithTimings } from 'f5-conx-core';
+import { NgxFsProvider } from './ngxFileSystem';
 
-// import jsyaml from "js-yaml";
+import Logger from "f5-conx-core/dist/logger";
+
 
 
 export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
@@ -37,11 +47,14 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     context: ExtensionContext;
     nim: NimClient | undefined;
     inventory: Instances | undefined;
-    logger: extensionLogger;
+    logger: Logger;
+    documents: TextDocument[] = [];
+    ngxFs: NgxFsProvider;
 
-    constructor(context: ExtensionContext, logger: extensionLogger) {
+    constructor(context: ExtensionContext, logger: Logger, ngxFS: NgxFsProvider) {
         this.context = context;
         this.logger = logger;
+        this.ngxFs = ngxFS;
     }
 
 
@@ -52,7 +65,7 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
         this.inventory = undefined;
 
         if (this.nim) {
-            await this.getInventory()
+            await this.getInventory();
         }
         this._onDidChangeTreeData.fire(undefined);
     }
@@ -76,12 +89,36 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
         if (element) {
 
-            // get children of selected item
+            // if (element.label === 'test') {
+            //     const list = this.ngxFs.readDirectory(Uri.parse('ngx:/'));
+            //     for (const item in list) {
+            //         treeItems.push(new InvTreeItem(
+            //             list[item][0],
+            //             'desc...',
+            //             'tool',
+            //             '',
+            //             'instance',
+            //             TreeItemCollapsibleState.Collapsed,
+            //             'id1234',
+            //             {
+            //                 command: 'nginx.displayConfigFile',
+            //                 title: '',
+            //                 arguments: [`ngx:/${list[item][0]}`]
+            //             },
+            //         ));
+            //     }
+            // }
 
+
+            // get children of selected item
             await this.nim.makeRequest(`${this.nim.api.instances}/${element.id}/config`)
                 .then(resp => {
 
                     resp.data.files.forEach((el: InstanceConfig) => {
+
+                        // this.ngxFs.writeFile(Uri.parse(`ngx:${el.name}`), Buffer.from(el.contents, 'base64'), { create: true, overwrite: true });
+
+                        this.ngxFs.loadFile(Uri.parse(el.name), Buffer.from(el.contents, 'base64'), el.instance_id);
 
                         const txt = jsYaml.dump({
                             name: el.name,
@@ -107,18 +144,29 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
                                 el.instance_id,
                                 { 
                                     command: 'nginx.displayConfigFile',
-                                    title: 'asdf',
-                                    arguments: [el]
+                                    title: '',
+                                    arguments: [`ngx:${el.name}`]
                                 }
                             )
                         );
                     });
 
-                })
+                });
 
 
 
         } else {
+
+            // treeItems.push(new InvTreeItem(
+            //     'test',
+            //     'desc...',
+            //     'tool',
+            //     '',
+            //     'instance',
+            //     TreeItemCollapsibleState.Collapsed,
+            //     'id1234',
+            //     undefined,
+            // ));
 
             if (this.inventory && this.inventory.list.length > 0) {
                 this.inventory.list.map((el: Instance) => {
@@ -142,6 +190,9 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
         }
         return treeItems;
+
+
+
     }
 
     // /**
@@ -171,19 +222,38 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     }
 
     /**
-	 * nginx config in editor
-	 * @param item from tree view click
-	 */
-	async displayConfig(item: any) {
-		
-		// open editor and feed it the content
-		const doc = await workspace.openTextDocument({ content: item, language: 'NGINX' });
-		// make the editor appear
-		await window.showTextDocument( doc, { preview: false });
-		return doc;	// return something for automated testing
-	}
+     * nginx config in editor
+     * @param item from tree view click
+     */
+    async displayConfig(item: any) {
+
+        // workspace.t
+
+        // open editor and feed it the content
+        const doc = await workspace.openTextDocument({ content: item, language: 'NGINX' })
+            .then(async (doc) => {
+                await window.showTextDocument(doc, { preview: false });
+                this.documents.push(doc);
+            });
+        // make the editor appear
+        return doc;	// return something for automated testing
+    }
+
+
+
 
 }
+
+
+
+
+// class bDoc implements TextDocument {
+
+// }
+
+// class NimInvDocument extends Disposable implements CustomDocument {
+
+// }
 
 
 /**
@@ -200,6 +270,10 @@ export function sortTreeItems(treeItems: InvTreeItem[]) {
         }
     });
 }
+
+// class NginxContDoc implements TextDocument {
+
+// }
 
 /**
  * bigiq class tree item

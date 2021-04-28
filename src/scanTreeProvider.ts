@@ -21,7 +21,7 @@ import {
 import { NimClient } from './nimClient';
 
 import jsYaml from "js-yaml";
-import { extensionLogger } from './logger';
+import Logger from "f5-conx-core/dist/logger";
 
 
 export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
@@ -31,9 +31,9 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
     context: ExtensionContext;
     nim: NimClient | undefined;
     scanServers: any[] = [];
-    logger: extensionLogger;
+    logger: Logger;
 
-    constructor(context: ExtensionContext, logger: extensionLogger) {
+    constructor(context: ExtensionContext, logger: Logger) {
         this.context = context;
         this.logger = logger;
     }

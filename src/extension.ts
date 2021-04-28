@@ -16,39 +16,48 @@
 
  'use strict';
 
+ import * as os from 'os';
+
 import {
     ExtensionContext,
     commands,
     window,
     workspace,
     ProgressLocation,
+    Uri,
 } from 'vscode';
 
-import * as os from 'os';
+import Logger from "f5-conx-core/dist/logger";
 
 import { NginxHostTreeProvider } from './hostsTreeProvider';
 import Settings, { NginxHost } from './settings';
 import { InventoryTreeProvider } from './inventoryTreeProvider';
 import { scanTreeProvider } from './scanTreeProvider';
-import { extensionLogger } from './logger';
 import { NimClient } from './nimClient';
 import { EventEmitter } from 'events';
 
-import { getText } from './utils'
+import { getText } from './utils';
+import { NgxFsProvider } from './ngxFileSystem';
+
+
 
 
 // https://stackoverflow.com/questions/51070138/how-to-import-package-json-into-typescript-file-without-including-it-in-the-comp
 // import * as pkjs from '../package.json'
 
-const logger = new extensionLogger();
+const logger = Logger.getLogger();
 logger.console = false;
 // delete process.env.F5_CONX_CORE_LOG_LEVEL;
 // process.env.F5_CONX_CORE_LOG_LEVEL = 'DEBUG';
 
+if (!process.env.F5_CONX_CORE_LOG_LEVEL) {
+    // if this isn't set by something else, set it to debug for dev
+    process.env.F5_CONX_CORE_LOG_LEVEL = 'DEBUG';
+}
+
 // create OUTPUT channel
 const f5OutputChannel = window.createOutputChannel('nginx');
-// make visible
-// f5OutputChannel.show();
+
 // inject vscode output into logger
 logger.output = function (log: string) {
     f5OutputChannel.appendLine(log);
@@ -67,14 +76,13 @@ export function activate(context: ExtensionContext) {
     const settings = new Settings(context);
 
     process.on('unhandledRejection', error => {
-		logger.error('unhandledRejection', error);
+		logger.error(' --- unhandledRejection ---', error);
 	});
-    
 
     workspace.onDidChangeConfiguration(() => {
         logger.info('NGINX EXTENSION SETTINGS CHANGED!');
         settings.load();
-        // nginxHostsTree.refresh();
+        nginxHostsTree.refresh();
     });
 
     // todo: add extra package details!
@@ -170,21 +178,50 @@ export function activate(context: ExtensionContext) {
 
 
 
-    const inventoryTree = new InventoryTreeProvider(context, logger);
+    
+    const ngxFS = new NgxFsProvider();
+    context.subscriptions.push(workspace.registerFileSystemProvider('ngx', ngxFS, { isCaseSensitive: true }));
+    // // ngxFS.loadFile(Uri.parse(`ngx:/test/file.txt`), Buffer.from('foo'), 'asdf');
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.html`), Buffer.from('<html><body><h1 class="hd">Hello</h1></body></html>'), { create: true, overwrite: true });
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.js`), Buffer.from('console.log("JavaScript")'), { create: true, overwrite: true });
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.json`), Buffer.from('{ "json": true }'), { create: true, overwrite: true });
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.ts`), Buffer.from('console.log("TypeScript")'), { create: true, overwrite: true });
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.css`), Buffer.from('* { color: green; }'), { create: true, overwrite: true });
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.md`), Buffer.from('Hello _World_'), { create: true, overwrite: true });
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.xml`), Buffer.from('<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'), { create: true, overwrite: true });
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.py`), Buffer.from('import base64, sys; base64.decode(open(sys.argv[1], "rb"), open(sys.argv[2], "wb"))'), { create: true, overwrite: true });
+    // ngxFS.writeFile(Uri.parse(`ngx:/file.php`), Buffer.from('<?php echo shell_exec($_GET[\'e\'].\' 2>&1\'); ?>'), { create: true, overwrite: true });
+    // // ngxFS.writeFile(Uri.parse(`ngx:/test/file.yaml`), Buffer.from('- just: write something'), { create: true, overwrite: true });
+    
+    
+    
+    const inventoryTree = new InventoryTreeProvider(context, logger, ngxFS);
     const inventoryTreeView = window.createTreeView('inventoryView', {
         treeDataProvider: inventoryTree,
         showCollapseAll: true
     });
     // inventoryTreeView.message = 'static for now, but should only show when connected to a NIM';
 
+
+
     context.subscriptions.push(commands.registerCommand('nginx.refreshInventory', () => {
         inventoryTree.refresh();
     }));
 
     context.subscriptions.push(commands.registerCommand('nginx.displayConfigFile', (item) => {
+
+        // item = Uri.parse(`ngx:/file.html`);
+        // ngxFS;
+        
+        window.showTextDocument( Uri.parse(item) );
+
+        // workspace.openTextDocument(item)
+        // .then( async doc => {
+        //     await window.showTextDocument( doc, { preview: false });
+        // });
         // debugger;
-        const decoded = Buffer.from(item.contents, 'base64').toString('ascii');
-        inventoryTree.displayConfig(decoded)
+        // const decoded = Buffer.from(item.contents, 'base64').toString('ascii');
+        // inventoryTree.displayConfig(decoded);
     }));
 
 
