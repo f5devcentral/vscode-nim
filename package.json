@@ -159,6 +159,18 @@
 				"icon": "$(refresh)"
 			},
 			{
+				"command": "nginx.analyzeConfigs",
+				"title": "Analyze Configs",
+				"category": "NGINX",
+				"icon": "$(star)"
+			},
+			{
+				"command": "nginx.publishConfigs",
+				"title": "Publish Configs",
+				"category": "NGINX",
+				"icon": "$(cloud-upload)"
+			},
+			{
 				"command": "nim.scanStart",
 				"title": "Start Scan",
 				"category": "NGINX"
@@ -202,6 +214,16 @@
 				{
 					"command": "nginx.removeHost",
 					"when": "view == hostsView && viewItem == host",
+					"group": "inline"
+				},
+				{
+					"command": "nginx.analyzeConfigs",
+					"when": "view == inventoryView && viewItem == instance",
+					"group": "inline"
+				},
+				{
+					"command": "nginx.publishConfigs",
+					"when": "view == inventoryView && viewItem == instance",
 					"group": "inline"
 				}
 			]

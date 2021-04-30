@@ -107,9 +107,6 @@ export class FsProvider implements FileSystemProvider {
         const basename = path.posix.basename(uri.path);
         const parent = this.lookupParentDirectory(uri);
 
-        // function to post updated doc back to nim
-        const stat = this.stat(uri);
-        commands.executeCommand('nginx.postConfigFile', uri, content, stat);
         
         let entry = parent.entries.get(basename);
         if (entry instanceof Directory) {
@@ -129,8 +126,12 @@ export class FsProvider implements FileSystemProvider {
         entry.mtime = Date.now();
         entry.size = content.byteLength;
         entry.data = content;
-
+        
         this.fireSoon({ type: FileChangeType.Changed, uri });
+
+        // function to post updated doc back to nim
+        const stat = this.stat(uri);
+        commands.executeCommand('nginx.postConfigFile', uri, content, stat);
     }
 
     // --- manage files/folders
@@ -258,6 +259,12 @@ export class FsProvider implements FileSystemProvider {
 }
 
 export class NgxFsProvider extends FsProvider {
+
+    hostFiles(hostname: string) {
+        // use the hostname to look up all folders/files/content to post configs back to nim
+
+
+    }
     
     loadFile(uri: Uri, content: Uint8Array, id: string): void {
         const basename = path.posix.basename(uri.path);

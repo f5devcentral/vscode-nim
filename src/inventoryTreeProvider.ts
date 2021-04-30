@@ -39,6 +39,14 @@ import { NgxFsProvider } from './ngxFileSystem';
 import Logger from "f5-conx-core/dist/logger";
 import path from 'path';
 
+export type InvFileSet = {
+    hostname: string;
+    files: string[];
+};
+
+export type IstFiles = {
+    [key: string]: string[]
+};
 
 
 export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
@@ -51,6 +59,7 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     logger: Logger;
     documents: TextDocument[] = [];
     ngxFs: NgxFsProvider;
+    instFiles: IstFiles = {};
 
     constructor(context: ExtensionContext, logger: Logger, ngxFS: NgxFsProvider) {
         this.context = context;
@@ -94,7 +103,15 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
             await this.nim.makeRequest(`${this.nim.api.instances}/${element.deviceId}/config`)
                 .then(resp => {
 
+                    // start building file list for host
+                    // const fileTracker: InvFileSet = { hostname: element.label, files: []};
+                    const files: string[] = [];
+
                     resp.data.files.forEach((el: InstanceConfig) => {
+
+                        // add files to file tracker
+                        // this.instFiles?[element.label].push(el.name, 'asdf'): 
+                        files.push(el.name);
 
                         const uri = Uri.parse(path.join(element.label, el.name));
 
@@ -106,25 +123,26 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
                             modified: el.modified
                         }, { indent: 4 });
 
-                        // const decoded = Buffer.from(el.contents, 'base64').toString('ascii');
+                        const decoded = Buffer.from(el.contents, 'base64').toString('ascii');
 
                         const tooltip = new MarkdownString()
-                        .appendCodeblock(txt, 'yaml');
-                        // .appendMarkdown('\n---\n');
-                        // .appendText(decoded);
+                            .appendCodeblock(txt, 'yaml');
+                            // .appendMarkdown('\n---\n')
+                            // .appendText(decoded);
 
                         const tiPath = path.join(element.label, el.name);
+                        // const description = 
 
                         treeItems.push(
                             new InvTreeItem(
                                 el.name,
-                                '',
+                                el.modified,
                                 tooltip,
                                 new ThemeIcon('file'),
-                                'instance',
+                                'config',
                                 TreeItemCollapsibleState.None,
                                 element.deviceId,
-                                { 
+                                {
                                     command: 'nginx.displayConfigFile',
                                     title: '',
                                     arguments: [`ngx:/${tiPath}`]
@@ -132,6 +150,9 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
                             )
                         );
                     });
+
+                    // inject host file list back into main class
+                    this.instFiles = { [element.label]: files };
 
                 });
 

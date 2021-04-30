@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
- 'use strict';
+'use strict';
 
- import * as os from 'os';
+import * as os from 'os';
 
 import {
     ExtensionContext,
@@ -74,8 +74,8 @@ export function activate(context: ExtensionContext) {
     const settings = new Settings(context);
 
     process.on('unhandledRejection', error => {
-		logger.error(' --- unhandledRejection ---', error);
-	});
+        logger.error(' --- unhandledRejection ---', error);
+    });
 
     workspace.onDidChangeConfiguration(() => {
         logger.info('NGINX EXTENSION SETTINGS CHANGED!');
@@ -100,9 +100,9 @@ export function activate(context: ExtensionContext) {
         showCollapseAll: true
     });
 
-    hostsTreeView.onDidChangeVisibility( e => {
+    hostsTreeView.onDidChangeVisibility(e => {
         // set this up to respect if onConnect/terminal has been setup
-        if(e.visible) {
+        if (e.visible) {
             f5OutputChannel.show();
         }
     });
@@ -138,14 +138,14 @@ export function activate(context: ExtensionContext) {
         }, async () => {
 
             nim = new NimClient(host, eventer);
-    
+
             await nim.connect()
                 .then(() => {
                     commands.executeCommand('setContext', 'nim.connected', true);
                     inventoryTree.nim = nim;
                     // inventoryTreeView.message = "connected";
                     inventoryTree.refresh();
-    
+
                     // scanTree.nim = nim;
                     // scanTreeView.message = "connected";
                     // scanTree.refresh();
@@ -155,7 +155,7 @@ export function activate(context: ExtensionContext) {
                     logger.error('nim connect failed', err);
                 });
         });
-        
+
 
     }));
 
@@ -176,12 +176,12 @@ export function activate(context: ExtensionContext) {
 
 
 
-    
+
 
 
     const ngxFS = new NgxFsProvider();
     context.subscriptions.push(workspace.registerFileSystemProvider('ngx', ngxFS, { isCaseSensitive: true }));
-    
+
     const inventoryTree = new InventoryTreeProvider(context, logger, ngxFS);
     const inventoryTreeView = window.createTreeView('inventoryView', {
         treeDataProvider: inventoryTree,
@@ -195,48 +195,112 @@ export function activate(context: ExtensionContext) {
     }));
 
     context.subscriptions.push(commands.registerCommand('nginx.displayConfigFile', (item) => {
-        window.showTextDocument( Uri.parse(item) );
+        window.showTextDocument(Uri.parse(item));
     }));
 
     context.subscriptions.push(commands.registerCommand('nginx.postConfigFile', (uri, content, stat) => {
-        if(!nim) {
+        if (!nim) {
             return;
         }
 
+
         // const uriB = uri;
         // const instance_id = stat.deviceId;
-        const encoded = Buffer.from(content).toString('base64');
+        // const encoded = Buffer.from(content).toString('base64');
         const api = `${nim.api.instances}/${stat.id}/config`;
         const pathy = uri.path.split('/');
         const hostname = pathy.splice(1, 1);
-        // const pathy2 = pathy.splice(1, 1);
+
+        const files = inventoryTree.instFiles[hostname[0]].map(el => {
+            const stat = ngxFS.stat(Uri.parse(`ngx:/${hostname[0]}${el}`));
+            const contnt = ngxFS.readFile(Uri.parse(`ngx:/${hostname[0]}${el}`));
+            return {
+                name: el,
+                contents: Buffer.from(contnt).toString('base64'),
+                created: new Date(stat.ctime).toISOString(),
+                modified: new Date(stat.mtime).toISOString(),
+            };
+        });
+
 
         nim.makeRequest(api, {
             method: 'POST',
             data: {
                 instance_id: stat.id,
-                created: '2021-04-29T21:20:22.075029318Z',
-                modified: '2021-04-29T21:20:25.075029318Z',
-                files: [
-                    {
-                        name: pathy.join('/'),
-                        contents: encoded,
-                        created: '2021-04-29T21:20:22.075029318Z',
-                        modified: '2021-04-29T21:20:25.075029318Z',
-                    }
-                ]
+                modified: new Date().toISOString(),
+                files
             }
         })
-        .then( resp => {
-            debugger;
-            // use the id/hostname to clear the directory and refresh tree?
-        })
-        .catch( err => {
-            // logger.error(err);
-            debugger;
-        });
+            .then(resp => {
+                // debugger;
+                logger.info('nginx.postConfigFile', ' - successful - ');
+                inventoryTree.refresh();
+                // use the id/hostname to clear the directory and refresh tree?
+            })
+            .catch(err => {
+                // logger.error(err);
+                logger.info('nginx.postConfigFile', ' - failed - ');
+            });
 
     }));
+
+    context.subscriptions.push(commands.registerCommand('nginx.analyzeConfigs', (item) => {
+        // window.showTextDocument( Uri.parse(item) );
+        if (!nim) { return; };
+
+        const api = `${nim.api.instances}/${item.deviceId}/config/analyze`;
+
+        nim.makeRequest(api, {
+            method: 'POST',
+            data: {}
+        })
+            .then(resp => {
+                // debugger;
+                logger.info('nginx.analyzConfigs', ' - successful - ');
+                inventoryTree.refresh();
+                window.showInformationMessage('NIM: Analyze Configs Successful');
+                // use the id/hostname to clear the directory and refresh tree?
+            })
+            .catch(err => {
+                // logger.error(err);
+                logger.info('nginx.analyzConfigs', ' - failed - ');
+            });
+
+    }));
+
+
+    context.subscriptions.push(commands.registerCommand('nginx.publishConfigs', (item) => {
+        // window.showTextDocument( Uri.parse(item) );
+        if (!nim) { return; };
+
+        const api = `${nim.api.instances}/${item.deviceId}/config/publish`;
+
+        nim.makeRequest(api, {
+            method: 'POST',
+            data: {
+                instance_id: item.deviceId,
+                force: true
+              }
+        })
+            .then(resp => {
+                // debugger;
+                logger.info('nginx.publishConfigs', ' --- SUCCESSFUL --- ');
+                inventoryTree.refresh();
+                window.showInformationMessage('NIM: Publish Configs Successful');
+                // use the id/hostname to clear the directory and refresh tree?
+            })
+            .catch(err => {
+                // logger.error(err);
+                logger.info('nginx.publishConfigs', ' --- FAILED --- ');
+            });
+
+    }));
+
+
+
+
+
+
 
 
 
