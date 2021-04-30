@@ -201,7 +201,7 @@ export class NimClient {
             options.auth = {
                 username: this.host.auth.basic,
                 password: this.password
-            }
+            };
         }
 
         // options.httpsAgent = new https.Agent({ keepAlive: true });
@@ -227,7 +227,7 @@ export class NimClient {
             this.system = resp.data;
         });
 
-        savePassword(this.host.device, this.password)
+        savePassword(this.host.device, this.password);
         
     }
 

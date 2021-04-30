@@ -37,6 +37,7 @@ import jsYaml from 'js-yaml';
 import { NgxFsProvider } from './ngxFileSystem';
 
 import Logger from "f5-conx-core/dist/logger";
+import path from 'path';
 
 
 
@@ -89,36 +90,15 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
         if (element) {
 
-            // if (element.label === 'test') {
-            //     const list = this.ngxFs.readDirectory(Uri.parse('ngx:/'));
-            //     for (const item in list) {
-            //         treeItems.push(new InvTreeItem(
-            //             list[item][0],
-            //             'desc...',
-            //             'tool',
-            //             '',
-            //             'instance',
-            //             TreeItemCollapsibleState.Collapsed,
-            //             'id1234',
-            //             {
-            //                 command: 'nginx.displayConfigFile',
-            //                 title: '',
-            //                 arguments: [`ngx:/${list[item][0]}`]
-            //             },
-            //         ));
-            //     }
-            // }
-
-
             // get children of selected item
-            await this.nim.makeRequest(`${this.nim.api.instances}/${element.id}/config`)
+            await this.nim.makeRequest(`${this.nim.api.instances}/${element.deviceId}/config`)
                 .then(resp => {
 
                     resp.data.files.forEach((el: InstanceConfig) => {
 
-                        // this.ngxFs.writeFile(Uri.parse(`ngx:${el.name}`), Buffer.from(el.contents, 'base64'), { create: true, overwrite: true });
+                        const uri = Uri.parse(path.join(element.label, el.name));
 
-                        this.ngxFs.loadFile(Uri.parse(el.name), Buffer.from(el.contents, 'base64'), el.instance_id);
+                        this.ngxFs.loadFile(uri, Buffer.from(el.contents, 'base64'), element.deviceId);
 
                         const txt = jsYaml.dump({
                             name: el.name,
@@ -126,12 +106,14 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
                             modified: el.modified
                         }, { indent: 4 });
 
-                        const decoded = Buffer.from(el.contents, 'base64').toString('ascii');
+                        // const decoded = Buffer.from(el.contents, 'base64').toString('ascii');
 
                         const tooltip = new MarkdownString()
-                        .appendCodeblock(txt, 'yaml')
-                        .appendMarkdown('\n---\n')
-                        .appendText(decoded);
+                        .appendCodeblock(txt, 'yaml');
+                        // .appendMarkdown('\n---\n');
+                        // .appendText(decoded);
+
+                        const tiPath = path.join(element.label, el.name);
 
                         treeItems.push(
                             new InvTreeItem(
@@ -141,11 +123,11 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
                                 new ThemeIcon('file'),
                                 'instance',
                                 TreeItemCollapsibleState.None,
-                                el.instance_id,
+                                element.deviceId,
                                 { 
                                     command: 'nginx.displayConfigFile',
                                     title: '',
-                                    arguments: [`ngx:${el.name}`]
+                                    arguments: [`ngx:/${tiPath}`]
                                 }
                             )
                         );
@@ -156,17 +138,6 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
 
         } else {
-
-            // treeItems.push(new InvTreeItem(
-            //     'test',
-            //     'desc...',
-            //     'tool',
-            //     '',
-            //     'instance',
-            //     TreeItemCollapsibleState.Collapsed,
-            //     'id1234',
-            //     undefined,
-            // ));
 
             if (this.inventory && this.inventory.list.length > 0) {
                 this.inventory.list.map((el: Instance) => {
@@ -195,20 +166,6 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
     }
 
-    // /**
-    //  * fetch inventory information
-    //  */
-    // async getInventory(id: string = ''): Promise<AxiosResponseWithTimings> {
-    //     // this.inventory = undefined;
-    //     const way = await this.nim?.makeRequest(`${this.nim.api.instances}`)
-    //         .then(resp => resp)
-    //         .catch( err => {
-    //             this.logger.error(err)
-    //             return Promise.reject(err)
-    //         });
-
-    //     return way;
-    // }
 
     /**
      * fetch bigiq managed device information
@@ -221,39 +178,8 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
             });
     }
 
-    /**
-     * nginx config in editor
-     * @param item from tree view click
-     */
-    async displayConfig(item: any) {
-
-        // workspace.t
-
-        // open editor and feed it the content
-        const doc = await workspace.openTextDocument({ content: item, language: 'NGINX' })
-            .then(async (doc) => {
-                await window.showTextDocument(doc, { preview: false });
-                this.documents.push(doc);
-            });
-        // make the editor appear
-        return doc;	// return something for automated testing
-    }
-
-
-
-
 }
 
-
-
-
-// class bDoc implements TextDocument {
-
-// }
-
-// class NimInvDocument extends Disposable implements CustomDocument {
-
-// }
 
 
 /**
@@ -286,7 +212,7 @@ class InvTreeItem extends TreeItem {
         public iconPath: string | ThemeIcon,
         public contextValue: string,
         public readonly collapsibleState: TreeItemCollapsibleState,
-        public readonly id?: string,
+        public deviceId: string,
         public readonly command?: Command,
     ) {
         super(label, collapsibleState);

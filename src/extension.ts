@@ -40,8 +40,6 @@ import { getText } from './utils';
 import { NgxFsProvider } from './ngxFileSystem';
 
 
-
-
 // https://stackoverflow.com/questions/51070138/how-to-import-package-json-into-typescript-file-without-including-it-in-the-comp
 // import * as pkjs from '../package.json'
 
@@ -179,28 +177,16 @@ export function activate(context: ExtensionContext) {
 
 
     
+
+
     const ngxFS = new NgxFsProvider();
     context.subscriptions.push(workspace.registerFileSystemProvider('ngx', ngxFS, { isCaseSensitive: true }));
-    // // ngxFS.loadFile(Uri.parse(`ngx:/test/file.txt`), Buffer.from('foo'), 'asdf');
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.html`), Buffer.from('<html><body><h1 class="hd">Hello</h1></body></html>'), { create: true, overwrite: true });
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.js`), Buffer.from('console.log("JavaScript")'), { create: true, overwrite: true });
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.json`), Buffer.from('{ "json": true }'), { create: true, overwrite: true });
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.ts`), Buffer.from('console.log("TypeScript")'), { create: true, overwrite: true });
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.css`), Buffer.from('* { color: green; }'), { create: true, overwrite: true });
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.md`), Buffer.from('Hello _World_'), { create: true, overwrite: true });
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.xml`), Buffer.from('<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'), { create: true, overwrite: true });
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.py`), Buffer.from('import base64, sys; base64.decode(open(sys.argv[1], "rb"), open(sys.argv[2], "wb"))'), { create: true, overwrite: true });
-    // ngxFS.writeFile(Uri.parse(`ngx:/file.php`), Buffer.from('<?php echo shell_exec($_GET[\'e\'].\' 2>&1\'); ?>'), { create: true, overwrite: true });
-    // // ngxFS.writeFile(Uri.parse(`ngx:/test/file.yaml`), Buffer.from('- just: write something'), { create: true, overwrite: true });
-    
-    
     
     const inventoryTree = new InventoryTreeProvider(context, logger, ngxFS);
     const inventoryTreeView = window.createTreeView('inventoryView', {
         treeDataProvider: inventoryTree,
         showCollapseAll: true
     });
-    // inventoryTreeView.message = 'static for now, but should only show when connected to a NIM';
 
 
 
@@ -209,19 +195,47 @@ export function activate(context: ExtensionContext) {
     }));
 
     context.subscriptions.push(commands.registerCommand('nginx.displayConfigFile', (item) => {
-
-        // item = Uri.parse(`ngx:/file.html`);
-        // ngxFS;
-        
         window.showTextDocument( Uri.parse(item) );
+    }));
 
-        // workspace.openTextDocument(item)
-        // .then( async doc => {
-        //     await window.showTextDocument( doc, { preview: false });
-        // });
-        // debugger;
-        // const decoded = Buffer.from(item.contents, 'base64').toString('ascii');
-        // inventoryTree.displayConfig(decoded);
+    context.subscriptions.push(commands.registerCommand('nginx.postConfigFile', (uri, content, stat) => {
+        if(!nim) {
+            return;
+        }
+
+        // const uriB = uri;
+        // const instance_id = stat.deviceId;
+        const encoded = Buffer.from(content).toString('base64');
+        const api = `${nim.api.instances}/${stat.id}/config`;
+        const pathy = uri.path.split('/');
+        const hostname = pathy.splice(1, 1);
+        // const pathy2 = pathy.splice(1, 1);
+
+        nim.makeRequest(api, {
+            method: 'POST',
+            data: {
+                instance_id: stat.id,
+                created: '2021-04-29T21:20:22.075029318Z',
+                modified: '2021-04-29T21:20:25.075029318Z',
+                files: [
+                    {
+                        name: pathy.join('/'),
+                        contents: encoded,
+                        created: '2021-04-29T21:20:22.075029318Z',
+                        modified: '2021-04-29T21:20:25.075029318Z',
+                    }
+                ]
+            }
+        })
+        .then( resp => {
+            debugger;
+            // use the id/hostname to clear the directory and refresh tree?
+        })
+        .catch( err => {
+            // logger.error(err);
+            debugger;
+        });
+
     }));
 
 

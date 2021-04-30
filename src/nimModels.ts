@@ -43,8 +43,7 @@ export type InstanceConfig = {
     created: string;
     modified: string;
     contents: string; 
-    instance_id: string;
-}
+};
 
 export type nimSystem = {
     grpc_port: string;
@@ -126,4 +125,4 @@ export const nimLicenseResponse = {
             version: "2",
         },
     ],
-}
+};

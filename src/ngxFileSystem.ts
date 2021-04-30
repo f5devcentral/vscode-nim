@@ -27,6 +27,7 @@ import {
     FileSystemError,
     FileSystemProvider,
     FileType,
+    commands,
 } from 'vscode';
 
 import path from 'path';
@@ -39,16 +40,15 @@ export class File implements FileStat {
     size: number;
 
     name: string;
-    id: string | undefined;
+    id?: string | undefined;
     data?: Uint8Array;
 
-    constructor(name: string, id?: string) {
+    constructor(name: string) {
         this.type = FileType.File;
         this.ctime = Date.now();
         this.mtime = Date.now();
         this.size = 0;
         this.name = name;
-        this.id = id;
     }
 }
 
@@ -106,6 +106,11 @@ export class FsProvider implements FileSystemProvider {
     writeFile(uri: Uri, content: Uint8Array, options: { create: boolean, overwrite: boolean }): void {
         const basename = path.posix.basename(uri.path);
         const parent = this.lookupParentDirectory(uri);
+
+        // function to post updated doc back to nim
+        const stat = this.stat(uri);
+        commands.executeCommand('nginx.postConfigFile', uri, content, stat);
+        
         let entry = parent.entries.get(basename);
         if (entry instanceof Directory) {
             throw FileSystemError.FileIsADirectory(uri);
@@ -278,7 +283,7 @@ export class NgxFsProvider extends FsProvider {
             throw FileSystemError.FileExists(uri);
         }
         if (!entry) {
-            entry = new File(basename, id);
+            entry = new File(basename);
             parent.entries.set(basename, entry);
             this.fireSoon({ type: FileChangeType.Created, uri });
         }
@@ -298,7 +303,8 @@ export class NgxFsProvider extends FsProvider {
          // get the base directory
          const dirname = uri.with({ path: path.posix.dirname(uri.path) });
          
-         console.log('makePath', dirname.path);
+        //  console.log('makePath', dirname.path);
+        
         // split the base directory to the folder parts
         const parts = dirname.path.split('/');
 
@@ -318,10 +324,10 @@ export class NgxFsProvider extends FsProvider {
             const here = this.lookup(Uri.parse(path.join(...fullPath)), true);
             if (!here) {
                 // current folder not found, so create it
-                console.log('creating dir', fullPath);
+                // console.log('creating dir', fullPath);
                 this.createDirectory(Uri.parse(path.join(...fullPath)));
             } else {
-                console.log('directory exists already: ', fullPath);
+                // console.log('directory exists already: ', fullPath);
             }
         }
     }
