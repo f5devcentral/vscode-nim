@@ -10,7 +10,7 @@
 		"url": "https://github.com/f5devcentral/vscode-nginx"
 	},
 	"engines": {
-		"vscode": "^1.55.0"
+		"vscode": "^1.52.0"
 	},
 	"categories": [
 		"Other"
@@ -248,7 +248,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.37",
-		"@types/vscode": "^1.55.0",
+		"@types/vscode": "^1.52.0",
 		"@typescript-eslint/eslint-plugin": "^4.21.0",
 		"@typescript-eslint/parser": "^4.21.0",
 		"eslint": "^7.24.0",
