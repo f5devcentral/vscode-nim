@@ -146,9 +146,16 @@ export function activate(context: ExtensionContext) {
                     // inventoryTreeView.message = "connected";
                     inventoryTree.refresh();
 
-                    // scanTree.nim = nim;
-                    // scanTreeView.message = "connected";
+                    scanTree.nim = nim;
+                    scanTree.getScanStatus();
+                    scanTree.getScanServers();
                     // scanTree.refresh();
+
+                    if(!nim) {return;}
+
+                    // save device license/system details for offline hosts hover
+                    nginxHostsTree.saveHostDetails(nim);
+
                     // debugger;
                 })
                 .catch(err => {
@@ -175,6 +182,18 @@ export function activate(context: ExtensionContext) {
     }));
 
 
+
+    // ##############################################################################
+    // ##############################################################################
+    // ##############################################################################
+    //
+    //
+    //          inventory
+    //
+    //
+    // ##############################################################################
+    // ##############################################################################
+    // ##############################################################################
 
 
 
@@ -305,6 +324,18 @@ export function activate(context: ExtensionContext) {
 
 
 
+    // ##############################################################################
+    // ##############################################################################
+    // ##############################################################################
+    //
+    //
+    //          scan
+    //
+    //
+    // ##############################################################################
+    // ##############################################################################
+    // ##############################################################################
+
 
 
 
@@ -316,10 +347,13 @@ export function activate(context: ExtensionContext) {
         treeDataProvider: scanTree,
         showCollapseAll: true
     });
-    scanTreeView.message = 'same as inventory tree view';
+    // scanTreeView.message = 'same as inventory tree view';
+
+    context.subscriptions.push(commands.registerCommand('nginx.refreshScan', () => {
+        scanTree.refresh();
+    }));
 
     context.subscriptions.push(commands.registerCommand('nim.scanStart', async () => {
-
         await getText()
             .then(async text => {
                 await scanTree.scanStart(text);
@@ -327,7 +361,16 @@ export function activate(context: ExtensionContext) {
             .catch(err => {
                 logger.error('nim.scanStart failed', err);
             });
-
     }));
+
+
+    context.subscriptions.push(commands.registerCommand('nginx.scanUpdateCidr', async () => {
+        scanTree.scanUpdatecidr();
+    }));
+
+    context.subscriptions.push(commands.registerCommand('nginx.scanUpdatePorts', async () => {
+        scanTree.scanUpdatePorts();
+    }));
+
 }
 

@@ -17,11 +17,13 @@ import {
     TreeDataProvider,
     TreeItem,
     TreeItemCollapsibleState,
+    window,
 } from 'vscode';
 import { NimClient } from './nimClient';
 
 import jsYaml from "js-yaml";
 import Logger from "f5-conx-core/dist/logger";
+import { NimScan, NimScanServer } from './nimModels';
 
 
 export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
@@ -30,8 +32,11 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
     readonly onDidChangeTreeData: Event<ScanTreeItem | undefined> = this._onDidChangeTreeData.event;
     context: ExtensionContext;
     nim: NimClient | undefined;
-    scanServers: any[] = [];
+    scanStatus: NimScan | undefined;
+    scanServers: NimScanServer[] = [];
     logger: Logger;
+    scanNetwork = '10.0.0.0/24';
+    scanPorts: string[] = ['0'];
 
     constructor(context: ExtensionContext, logger: Logger) {
         this.context = context;
@@ -43,6 +48,7 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
      * refresh tree view
      */
     refresh() {
+        // this.scan();
         this._onDidChangeTreeData.fire(undefined);
     }
 
@@ -58,7 +64,7 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
     async getChildren(element?: ScanTreeItem) {
         let treeItems: ScanTreeItem[] = [];
 
-        if(!this.nim) {
+        if (!this.nim) {
             // not connected, so don't try to populate anything
             return treeItems;
         }
@@ -67,22 +73,79 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
 
             // get children of selected item
 
+            if (element.label === 'Servers') {
+
+                this.scanServers.forEach(el => {
+
+                    const tooltip = new MarkdownString()
+                        .appendCodeblock(jsYaml.dump(el), 'yaml');
+
+                    treeItems.push(
+                        new ScanTreeItem(
+                            el.ip,
+                            '',
+                            tooltip,
+                            'scanServer',
+                            TreeItemCollapsibleState.None
+                        )
+                    );
+
+                });
+
+            }
+
+
+            if (element.label === 'Scan') {
+
+                treeItems.push(
+                    new ScanTreeItem(
+                        'Network CIDR',
+                        this.scanNetwork,
+                        'Click to update',
+                        'scanCidr',
+                        TreeItemCollapsibleState.None,
+                        {
+                            command: 'nginx.scanUpdateCidr',
+                            title: '',
+                        }
+                    ),
+                    new ScanTreeItem(
+                        'Ports',
+                        this.scanPorts.join('/'),
+                        'Click to update',
+                        'scanPorts',
+                        TreeItemCollapsibleState.None,
+                        {
+                            command: 'nginx.scanUpdatePorts',
+                            title: '',
+                        }
+                    )
+                );
+
+            }
+
         } else {
 
-            // // this.refreshData();
-            // await Promise.all([
-            //     this.getGlobalApps(),
-            //     this.getTemplates(),
-            //     this.getDevices(),
-            //     this.getScripts(),
-            //     this.getExecutedScripts()
-            // ]);
+
+            const scanStatus = new MarkdownString()
+                .appendCodeblock(jsYaml.dump(this.scanStatus), 'yaml');
 
             // todo: build count and hover details
             treeItems.push(
-                new ScanTreeItem('Start', '', '', '', TreeItemCollapsibleState.None),
-                new ScanTreeItem('found2', '', '', '', TreeItemCollapsibleState.Collapsed),
-                new ScanTreeItem('found3', '', '', '', TreeItemCollapsibleState.Collapsed),
+                new ScanTreeItem(
+                    'Scan',
+                    this.scanStatus?.status || '',
+                    scanStatus,
+                    'scanStatus',
+                    TreeItemCollapsibleState.Collapsed
+                ),
+                new ScanTreeItem(
+                    'Servers',
+                    this.scanServers.length.toString() || '',
+                    '',
+                    'scanServer',
+                    TreeItemCollapsibleState.Collapsed
+                )
             );
         }
         return treeItems;
@@ -91,15 +154,97 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
     /**
      * get scan status
      */
-    private async scanResults() {
-        this.scanServers.length = 0;
+    async getScanStatus() {
+        this.scanStatus = undefined;
 
         this.nim?.makeRequest(this.nim.api.scan)
-        .then( resp => {
-            // this.scanDetails = resp.data;
+            .then(resp => {
+                this.scanStatus = resp.data;
+                this.refresh();
+            });
+    }
 
+    /**
+     * get scan status
+     */
+    async getScanServers() {
+        this.scanServers.length = 0;
+        this.nim?.makeRequest(this.nim.api.scanServers)
+            .then(resp => {
+                // this.scanServers = resp.data.list;
+                resp.data.list.forEach((server: {
+                    instance_id: string;
+                    ip: string;
+                    port: string;
+                    app: string;
+                    version: string;
+                    fingerprinted: boolean;
+                    cves: number;
+                    managed_id: string;
+                    lastseen: string;
+                    added: string;
+                }) => {
+
+                    // try to find an existing server IP
+                    const serverIndex = this.scanServers.findIndex(el => el.ip === server.ip);
+
+                    if (serverIndex > 0) {
+                        // existing server item, add port
+                        this.scanServers[serverIndex].ports.push(server.port);
+                    } else {
+
+                        this.scanServers.push({
+                            instance_id: server.instance_id,
+                            ip: server.ip,
+                            ports: [server.port],
+                            app: server.app,
+                            version: server.version,
+                            fingerprinted: server.fingerprinted,
+                            cves: server.cves,
+                            managed_id: server.managed_id,
+                            lastseen: server.lastseen,
+                            added: server.added
+                        });
+                    }
+
+                });
+                this.refresh();
+            });
+    }
+
+    /**
+     * get scan status
+     */
+    async scanUpdatecidr() {
+        await window.showInputBox({
+            value: this.scanNetwork,
+            prompt: 'Update network CIDR to scan'
+        }).then( x => {
+            if (x) {
+                this.scanNetwork = x;
+                this.refresh();
+            }
         });
     }
+
+    /**
+     * get scan status
+     */
+    async scanUpdatePorts() {
+        await window.showInputBox({
+            value: this.scanPorts.join(','),
+            prompt: 'Update ports to scan',
+            placeHolder: 'comma seperated numbers "80,443"'
+        }).then( x => {
+            if (x) {
+                // todo: validate input, only numbers with commas
+                this.scanPorts = x.split(',');
+                this.refresh();
+            }
+        });
+    }
+
+
 
     /**
      * get scan status
@@ -119,10 +264,10 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
             method: 'POST',
             data
         })
-        .then( resp => {
-            // just log that the scan is running?
-            this.logger.debug('nim scan job start', resp);
-        });
+            .then(resp => {
+                // just log that the scan is running?
+                this.logger.debug('nim scan job start', resp);
+            });
 
     }
 

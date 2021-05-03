@@ -38,14 +38,14 @@ export type Instance = {
     added: string
 };
 
-export type InstanceConfig = { 
-    name: string; 
+export type InstanceConfig = {
+    name: string;
     created: string;
     modified: string;
-    contents: string; 
+    contents: string;
 };
 
-export type nimSystem = {
+export type NimSystem = {
     grpc_port: string;
     gw_port: string;
     bind_address: string;
@@ -93,7 +93,7 @@ export const nimSystemResponse = {
     },
 };
 
-export type nimLicense = {
+export type NimLicense = {
     attributes: {
         expiry: string;
         subscription: string;
@@ -123,6 +123,186 @@ export const nimLicenseResponse = {
             unlimited: true,
             serial: "2462532587506994",
             version: "2",
+        },
+    ],
+};
+
+
+export type NimScan = {
+    status: string;
+    err: null;
+    cancelled: boolean;
+    request_args: null;
+    duration: null;
+    scan_percentage_complete: string;
+    ips_scanned: number;
+    fingerprint_percentage_complete: string;
+    servers_found: number;
+    nginx_found: number;
+};
+
+const nimScan = {
+    status: "not yet run",
+    err: null,
+    cancelled: false,
+    request_args: null,
+    duration: null,
+    scan_percentage_complete: "",
+    ips_scanned: 0,
+    fingerprint_percentage_complete: "",
+    servers_found: 0,
+    nginx_found: 0,
+};
+
+
+export type NimScanServers = {
+    listinfo: {
+        limit: number;
+        offset: number;
+        total: number;
+    };
+    list: NimScanServer[];
+};
+
+export type NimScanServer = {
+    instance_id?: string;
+    ip: string;
+    ports: string[];
+    app?: string;
+    version?: string;
+    fingerprinted?: boolean;
+    cves?: number;
+    managed_id?: string;
+    lastseen?: string;
+    added?: string;
+};
+
+const nimScanServers = {
+    listinfo: {
+        limit: 0,
+        offset: 0,
+        total: 10,
+    },
+    list: [
+        {
+            instance_id: "",
+            ip: "10.1.1.5",
+            port: "80",
+            app: "nginx",
+            version: "1.16.1",
+            fingerprinted: false,
+            cves: 0,
+            managed_id: "ad8e7eb8-1343-45ba-bf6a-011bdd7e8f00",
+            lastseen: "2021-04-16T22:17:00.904446578Z",
+            added: "2021-04-16T22:17:00.904448714Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.6",
+            port: "80",
+            app: "nginx",
+            version: "1.19.8",
+            fingerprinted: false,
+            cves: 0,
+            managed_id: "e5355f65-ac41-4602-bb79-c23f2edfab4e",
+            lastseen: "2021-04-16T22:17:00.908996145Z",
+            added: "2021-04-16T22:17:00.908998064Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.7",
+            port: "80",
+            app: "nginx",
+            version: "1.19.5",
+            fingerprinted: false,
+            cves: 0,
+            managed_id: "dc6f97e6-d9c5-45db-858d-7c27ef9df302",
+            lastseen: "2021-04-16T22:17:00.912907451Z",
+            added: "2021-04-16T22:17:00.912909348Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.8",
+            port: "80",
+            app: "nginx",
+            version: "1.19.5",
+            fingerprinted: false,
+            cves: 0,
+            managed_id: "fd909663-5d3b-4706-8189-c49acf86c4a5",
+            lastseen: "2021-04-16T22:17:01.012661372Z",
+            added: "2021-04-16T22:17:01.012663470Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.9",
+            port: "80",
+            app: "nginx",
+            version: "1.7.1",
+            fingerprinted: false,
+            cves: 7,
+            managed_id: "",
+            lastseen: "2021-04-16T22:17:01.023130113Z",
+            added: "2021-04-16T22:17:01.023132073Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.10",
+            port: "80",
+            app: "nginx",
+            version: "1.19.5",
+            fingerprinted: false,
+            cves: 0,
+            managed_id: "",
+            lastseen: "2021-04-16T22:17:01.097946666Z",
+            added: "2021-04-16T22:17:01.097951935Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.4",
+            port: "443",
+            app: "nginx",
+            version: "1.19.5",
+            fingerprinted: false,
+            cves: 0,
+            managed_id: "",
+            lastseen: "2021-04-16T22:17:01.192257048Z",
+            added: "2021-04-16T22:17:01.192258841Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.8",
+            port: "443",
+            app: "nginx",
+            version: "1.19.5",
+            fingerprinted: false,
+            cves: 0,
+            managed_id: "fd909663-5d3b-4706-8189-c49acf86c4a5",
+            lastseen: "2021-04-16T22:17:01.018293176Z",
+            added: "2021-04-16T22:17:01.018295102Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.10",
+            port: "443",
+            app: "nginx",
+            version: "1.19.5",
+            fingerprinted: false,
+            cves: 0,
+            managed_id: "",
+            lastseen: "2021-04-16T22:17:01.101335809Z",
+            added: "2021-04-16T22:17:01.101337508Z",
+        },
+        {
+            instance_id: "",
+            ip: "10.1.1.254",
+            port: "80",
+            app: "Node.js",
+            version: "",
+            fingerprinted: true,
+            cves: -1,
+            managed_id: "",
+            lastseen: "2021-04-16T22:17:07.468583752Z",
+            added: "2021-04-16T22:17:07.468586406Z",
         },
     ],
 };

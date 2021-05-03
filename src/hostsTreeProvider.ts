@@ -33,6 +33,7 @@ import {
     window,
 	workspace
 } from 'vscode';
+import { NimClient } from './nimClient';
 import Settings, { NginxHost } from './settings';
 
 // icon listing for addin icons to key elements
@@ -64,16 +65,41 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 		this.loadHosts();
 	}
     
-    
+    /**
+	 * load hosts from vscode workspace config
+	 * 
+	 */
 	async loadHosts(): Promise<void> {
 		this.nginxHosts = workspace.getConfiguration().get('f5.nginx.hosts') || [];
 	}
 
+	/**
+	 * save hosts config 
+	 */
 	async saveHosts(): Promise<void> {
 		await workspace.getConfiguration()
 			.update('f5.nginx.hosts', this.nginxHosts, ConfigurationTarget.Global);
 	}
 
+	/**
+	 * save systema and license details about host
+	 */
+	async saveHostDetails(nim: NimClient): Promise<void> {
+
+		// get index of host in the saved devices list
+		const hostIndex = this.nginxHosts.findIndex( el => el.device === nim.host.device);
+
+		// add the license and system details
+		this.nginxHosts[hostIndex].license = nim.license;
+		this.nginxHosts[hostIndex].system = nim.system;
+		
+		this.saveHosts();
+		this.refresh();
+	}
+
+	/**
+	 * load hosts from config and refresh tree view
+	 */
 	async refresh(): Promise<void> {
 		this.loadHosts();
 		this._onDidChangeTreeData.fire(undefined);
@@ -198,7 +224,7 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
     async removeDevice(hostID: NginxHostTreeItem) {
 		this.logger.debug(`Remove Host command:`, hostID);
 		
-		const newNginxHosts = this.nginxHosts.filter((item: NginxHost) => item.device !== hostID.label);
+		const newNginxHosts = this.nginxHosts.filter((item: NginxHost) => (item.device || item.label) !== hostID.label);
 		
 		if (this.nginxHosts.length === (newNginxHosts.length + 1)) {
 			this.logger.debug('device removed');

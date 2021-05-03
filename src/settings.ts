@@ -17,6 +17,7 @@
  'use strict';
 
 import { ExtensionContext, workspace } from "vscode";
+import { NimLicense, NimSystem } from "./nimModels";
 
 
 
@@ -42,6 +43,8 @@ export type NginxHost = {
          */
         token?: string,
     },
+    license?: NimLicense,
+    system?: NimSystem
 };
 
 /**

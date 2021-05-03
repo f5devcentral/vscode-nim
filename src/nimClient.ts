@@ -26,7 +26,7 @@ import { AxiosResponseWithTimings, getRandomUUID, HttpResponse } from 'f5-conx-c
 import { EventEmitter } from 'events';
 import { uuidAxiosRequestConfig } from 'f5-conx-core';
 import { URL } from 'url';
-import { nimLicense, nimSystem } from './nimModels';
+import { NimLicense, NimSystem } from './nimModels';
 import { NginxHost } from './settings';
 import { getPassword, savePassword } from './utils';
 
@@ -81,12 +81,12 @@ export class NimClient {
     /**
      * license details from nim instance
      */
-    license: nimLicense | undefined;
+    license: NimLicense | undefined;
 
     /**
      * system details from nim instance
      */
-    system: nimSystem | undefined;
+    system: NimSystem | undefined;
 
 
     readonly api = {
@@ -94,7 +94,8 @@ export class NimClient {
         system: '/api/v0/about/system',
         analyze: '/api/v0/system/analyze',
         instances: '/api/v0/instances',
-        scan: '/api/v0/scan'
+        scan: '/api/v0/scan',
+        scanServers: '/api/v0/scan/servers'
     };
 
 

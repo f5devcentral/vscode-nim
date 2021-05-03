@@ -17,11 +17,9 @@
  'use strict';
 
 import {
-    window,
-    SecretStorage
+    window
 } from 'vscode';
 import keytar from "keytar";
-// import { logger } from './logger';
 
 
 

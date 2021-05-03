@@ -171,6 +171,12 @@
 				"icon": "$(cloud-upload)"
 			},
 			{
+				"command": "nginx.refreshScan",
+				"title": "Refresh Scan",
+				"category": "NGINX",
+				"icon": "$(refresh)"
+			},
+			{
 				"command": "nim.scanStart",
 				"title": "Start Scan",
 				"category": "NGINX"
@@ -197,6 +203,11 @@
 				{
 					"command": "nginx.refreshInventory",
 					"when": "view == inventoryView",
+					"group": "navigation"
+				},
+				{
+					"command": "nginx.refreshScan",
+					"when": "view == scanView",
 					"group": "navigation"
 				}
 			],
