@@ -80,10 +80,12 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
                     const tooltip = new MarkdownString()
                         .appendCodeblock(jsYaml.dump(el), 'yaml');
 
+                    const desc = el.ports.join('/');
+
                     treeItems.push(
                         new ScanTreeItem(
                             el.ip,
-                            '',
+                            desc,
                             tooltip,
                             'scanServer',
                             TreeItemCollapsibleState.None
@@ -136,14 +138,14 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
                     'Scan',
                     this.scanStatus?.status || '',
                     scanStatus,
-                    'scanStatus',
+                    'scanStatusHeader',
                     TreeItemCollapsibleState.Collapsed
                 ),
                 new ScanTreeItem(
                     'Servers',
                     this.scanServers.length.toString() || '',
                     '',
-                    'scanServer',
+                    'scanServers',
                     TreeItemCollapsibleState.Collapsed
                 )
             );

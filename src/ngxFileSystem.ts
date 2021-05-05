@@ -103,6 +103,14 @@ export class FsProvider implements FileSystemProvider {
         throw FileSystemError.FileNotFound();
     }
 
+    /**
+     * native write/create file
+     *  - allows create/overwrite
+     *  - directories must exist
+     * @param uri 
+     * @param content 
+     * @param options 
+     */
     writeFile(uri: Uri, content: Uint8Array, options: { create: boolean, overwrite: boolean }): void {
         const basename = path.posix.basename(uri.path);
         const parent = this.lookupParentDirectory(uri);
@@ -131,7 +139,7 @@ export class FsProvider implements FileSystemProvider {
 
         // function to post updated doc back to nim
         const stat = this.stat(uri);
-        commands.executeCommand('nginx.postConfigFile', uri, content, stat);
+        commands.executeCommand('nginx.postConfigFile', {uri, stat});
     }
 
     // --- manage files/folders
@@ -260,12 +268,16 @@ export class FsProvider implements FileSystemProvider {
 
 export class NgxFsProvider extends FsProvider {
 
-    hostFiles(hostname: string) {
-        // use the hostname to look up all folders/files/content to post configs back to nim
-
-
-    }
     
+    /**
+     * load/create file (will create necessary parent folders)
+     * 
+     * **will always create/overwrite**
+     * 
+     * @param uri 
+     * @param content 
+     * @param id 
+     */
     loadFile(uri: Uri, content: Uint8Array, id: string): void {
         const basename = path.posix.basename(uri.path);
 

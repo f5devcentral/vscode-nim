@@ -61,6 +61,9 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     ngxFs: NgxFsProvider;
     instFiles: IstFiles = {};
 
+    private ngxIcon = path.join(__dirname, "..", "images", "NGINX-product-icon.svg");
+    private ngxPlusIcon = path.join(__dirname, "..", "images", "NGINX-Plus-product-icon-RGB.svg");
+
     constructor(context: ExtensionContext, logger: Logger, ngxFS: NgxFsProvider) {
         this.context = context;
         this.logger = logger;
@@ -72,11 +75,6 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
      * refresh tree view
      */
     async refresh() {
-        this.inventory = undefined;
-
-        if (this.nim) {
-            await this.getInventory();
-        }
         this._onDidChangeTreeData.fire(undefined);
     }
 
@@ -167,11 +165,14 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
                     const tooltip = new MarkdownString()
                         .appendCodeblock(txt, 'yaml');
 
+                    const icon = el.nginx.type === 'plus' 
+                    ? this.ngxPlusIcon : this.ngxIcon;
+
                     treeItems.push(new InvTreeItem(
                         el.hostname,
                         (el.nginx.type || ''),
                         tooltip,
-                        '',
+                        icon,
                         'instance',
                         TreeItemCollapsibleState.Collapsed,
                         el.instance_id,
@@ -191,11 +192,12 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     /**
      * fetch bigiq managed device information
      */
-    private async getInventory() {
+    async getInventory() {
         this.inventory = undefined;
         await this.nim?.makeRequest(this.nim.api.instances)
             .then(resp => {
                 this.inventory = resp.data;
+                this.refresh();
             });
     }
 

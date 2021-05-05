@@ -159,16 +159,28 @@
 				"icon": "$(refresh)"
 			},
 			{
+				"command": "nginx.newConfig",
+				"title": "New Config",
+				"category": "NGINX",
+				"icon": "images/nim_newFile.svg"
+			},
+			{
+				"command": "nginx.saveConfigFile",
+				"title": "Save Config",
+				"category": "NGINX",
+				"icon": "images/nim_save.svg"
+			},
+			{
 				"command": "nginx.analyzeConfigs",
 				"title": "Analyze Configs",
 				"category": "NGINX",
-				"icon": "$(star)"
+				"icon": "images/nim_analyze.svg"
 			},
 			{
 				"command": "nginx.publishConfigs",
 				"title": "Publish Configs",
 				"category": "NGINX",
-				"icon": "$(cloud-upload)"
+				"icon": "images/nim_upload_arrow.svg"
 			},
 			{
 				"command": "nginx.refreshScan",
@@ -179,14 +191,32 @@
 			{
 				"command": "nim.scanStart",
 				"title": "Start Scan",
-				"category": "NGINX"
+				"category": "NGINX",
+				"icon": "images/nim_scan.svg"
+			},
+			{
+				"command": "nginx.deleteScanServer",
+				"title": "Delete",
+				"category": "NGINX",
+				"icon": "images/nim_trash.svg"
 			}
 		],
 		"menus": {
-			"editor/context": [
+			"editor/title": [
 				{
-					"command": "nim.scanStart",
-					"when": "nim.connected"
+					"command": "nginx.saveConfigFile",
+					"group": "navigation",
+					"when": "resourceScheme == ngx"
+				},
+				{
+					"command": "nginx.analyzeConfigs",
+					"group": "navigation",
+					"when": "resourceScheme == ngx"
+				},
+				{
+					"command": "nginx.publishConfigs",
+					"group": "navigation",
+					"when": "resourceScheme == ngx"
 				}
 			],
 			"view/title": [
@@ -228,6 +258,11 @@
 					"group": "inline"
 				},
 				{
+					"command": "nginx.newConfig",
+					"when": "view == inventoryView && viewItem == instance",
+					"group": "inline"
+				},
+				{
 					"command": "nginx.analyzeConfigs",
 					"when": "view == inventoryView && viewItem == instance",
 					"group": "inline"
@@ -235,6 +270,16 @@
 				{
 					"command": "nginx.publishConfigs",
 					"when": "view == inventoryView && viewItem == instance",
+					"group": "inline"
+				},
+				{
+					"command": "nim.scanStart",
+					"when": "view == scanView && viewItem == scanStatusHeader",
+					"group": "inline"
+				},
+				{
+					"command": "nginx.deleteScanServer",
+					"when": "view == scanView && viewItem == scanServer",
 					"group": "inline"
 				}
 			]

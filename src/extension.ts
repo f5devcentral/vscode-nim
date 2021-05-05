@@ -38,6 +38,8 @@ import { EventEmitter } from 'events';
 
 import { getText } from './utils';
 import { NgxFsProvider } from './ngxFileSystem';
+import path from 'path';
+import { InstanceFiles } from './nimModels';
 
 
 // https://stackoverflow.com/questions/51070138/how-to-import-package-json-into-typescript-file-without-including-it-in-the-comp
@@ -143,15 +145,15 @@ export function activate(context: ExtensionContext) {
                 .then(() => {
                     commands.executeCommand('setContext', 'nim.connected', true);
                     inventoryTree.nim = nim;
-                    // inventoryTreeView.message = "connected";
-                    inventoryTree.refresh();
+                    inventoryTree.getInventory();
+                    // inventoryTree.refresh();
 
                     scanTree.nim = nim;
                     scanTree.getScanStatus();
                     scanTree.getScanServers();
                     // scanTree.refresh();
 
-                    if(!nim) {return;}
+                    if (!nim) { return; }
 
                     // save device license/system details for offline hosts hover
                     nginxHostsTree.saveHostDetails(nim);
@@ -217,20 +219,60 @@ export function activate(context: ExtensionContext) {
         window.showTextDocument(Uri.parse(item));
     }));
 
-    context.subscriptions.push(commands.registerCommand('nginx.postConfigFile', (uri, content, stat) => {
+    context.subscriptions.push(commands.registerCommand('nginx.newConfig', (item) => {
+
+        // item should be inventory instance
+        window.showInputBox({
+            prompt: 'input file name (including path)',
+            placeHolder: '/etc/nginx/nginx.conf'
+        }).then(filePath => {
+            if (filePath) {
+
+                // ngxFS.loadFile(
+                //     Uri.parse(`ngx:/${item.label}${filePath}`),
+                //     Buffer.from(''),
+                //     item.id
+                // );
+                commands.executeCommand('nginx.postConfigFile', {
+                    uri: Uri.parse(`ngx:/${item.label}${filePath}`),
+                    stat: item.deviceId,
+                    newFile: true
+                });
+                inventoryTree.refresh();
+            }
+        });
+    }));
+
+
+    context.subscriptions.push(commands.registerCommand('nginx.saveConfigFile', (item) => {
+        commands.executeCommand('workbench.action.files.save');
+    }));
+
+    context.subscriptions.push(commands.registerCommand('nginx.postConfigFile', (item) => {
         if (!nim) {
             return;
         }
 
+        let id: string;
+
+        if (item.uri && item.stat.id) {
+            // command executed from editor save
+            id = item.stat.id;
+        } else {
+            // command excuted from new file
+            id = item.stat;
+        }
 
         // const uriB = uri;
         // const instance_id = stat.deviceId;
         // const encoded = Buffer.from(content).toString('base64');
-        const api = `${nim.api.instances}/${stat.id}/config`;
-        const pathy = uri.path.split('/');
+        const api = `${nim.api.instances}/${id}/config`;
+        const pathy = item.uri.path.split('/');
         const hostname = pathy.splice(1, 1);
 
-        const files = inventoryTree.instFiles[hostname[0]].map(el => {
+        
+
+        const files: InstanceFiles[] = inventoryTree.instFiles[hostname[0]].map(el => {
             const stat = ngxFS.stat(Uri.parse(`ngx:/${hostname[0]}${el}`));
             const contnt = ngxFS.readFile(Uri.parse(`ngx:/${hostname[0]}${el}`));
             return {
@@ -241,11 +283,20 @@ export function activate(context: ExtensionContext) {
             };
         });
 
+        if (item.newFile) {
+            // append new file to all the existing files
+            files.push({
+                name: item.uri,
+                contents: Buffer.from('').toString('base64'),
+                created: new Date().toISOString()
+            });
+        }
+
 
         nim.makeRequest(api, {
             method: 'POST',
             data: {
-                instance_id: stat.id,
+                instance_id: id,
                 modified: new Date().toISOString(),
                 files
             }
@@ -292,6 +343,9 @@ export function activate(context: ExtensionContext) {
         // window.showTextDocument( Uri.parse(item) );
         if (!nim) { return; };
 
+        // if item type === Uri from editor context
+        // or if item type === viewItem from view context
+
         const api = `${nim.api.instances}/${item.deviceId}/config/publish`;
 
         nim.makeRequest(api, {
@@ -299,7 +353,7 @@ export function activate(context: ExtensionContext) {
             data: {
                 instance_id: item.deviceId,
                 force: true
-              }
+            }
         })
             .then(resp => {
                 // debugger;
@@ -370,6 +424,35 @@ export function activate(context: ExtensionContext) {
 
     context.subscriptions.push(commands.registerCommand('nginx.scanUpdatePorts', async () => {
         scanTree.scanUpdatePorts();
+    }));
+
+    // context.subscriptions.push(commands.registerCommand('nginx.scanUpdatePorts', async () => {
+    //     scanTree.scanUpdatePorts();
+    // }));
+
+    context.subscriptions.push(commands.registerCommand('nginx.deleteScanServer', async (item) => {
+
+        const serverDetails = scanTree.scanServers.filter(el => el.ip === item.label)[0];
+
+        for (const port of serverDetails.ports) {
+
+            const api = `${nim?.api.scanServers}/${item.label}/${port}`;
+            nim?.makeRequest(api, {
+                method: 'DELETE'
+            })
+                // .then( resp => {
+
+                // })
+                .catch(err => {
+                    debugger;
+                });
+        }
+
+        // refresh scan servers data
+        scanTree.getScanServers();
+        // // refresh tree view
+        scanTree.refresh();
+
     }));
 
 }

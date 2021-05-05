@@ -45,6 +45,13 @@ export type InstanceConfig = {
     contents: string;
 };
 
+export type InstanceFiles = {
+    name: string;
+    contents: string;
+    created: string;
+    modified?: string;
+};
+
 export type NimSystem = {
     grpc_port: string;
     gw_port: string;

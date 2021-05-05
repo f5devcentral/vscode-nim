@@ -51,7 +51,7 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 	readonly deviceRex = /^[\w-.]+$/;
 
     // private green = path.join(__dirname, "..", "images", "NGINX-Instance-Manager-logo_horizontal.svg");
-    private green = path.join(__dirname, "..", "images", "NGINX-product-icon.svg");
+    private green = path.join(__dirname, "..", "images", "NGINX-Instance-Manager-icon_cutout.svg");
     
 	private context: ExtensionContext;
     nginxHosts: NginxHost[] = [];
