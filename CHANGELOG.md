@@ -9,6 +9,18 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ---
 
+## [0.3.0] - (05-05-2021)
+
+### Modified
+
+- Updated icons for NIM instance, NGINX, and NGINX+ instances
+- Updated icons for creating, analyzing, and publishing files
+- Updated icons for starting scan and deleting discovered servers from scan
+- Started adding file create functionality
+- Started adding start scan funcitonality
+  
+---
+
 ## [0.2.0] - (05-03-2021)
 
 ### Initial Release (MVP)
