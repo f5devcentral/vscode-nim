@@ -171,6 +171,12 @@
 				"icon": "images/nim_save.svg"
 			},
 			{
+				"command": "nginx.deleteConfig",
+				"title": "Delete Config",
+				"category": "NGINX",
+				"icon": "images/nim_trash.svg"
+			},
+			{
 				"command": "nginx.analyzeConfigs",
 				"title": "Analyze Configs",
 				"category": "NGINX",
@@ -270,6 +276,11 @@
 				{
 					"command": "nginx.publishConfigs",
 					"when": "view == inventoryView && viewItem == instance",
+					"group": "inline"
+				},
+				{
+					"command": "nginx.deleteConfig",
+					"when": "view == inventoryView && viewItem == config",
 					"group": "inline"
 				},
 				{

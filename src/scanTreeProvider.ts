@@ -251,24 +251,22 @@ export class scanTreeProvider implements TreeDataProvider<ScanTreeItem> {
     /**
      * get scan status
      */
-    async scanStart(data: string) {
-
-        // let data;
-        try {
-            data = JSON.parse(data);
-        } catch (e) {
-            throw e;
-        }
-
-        // this.scanServers.length = 0;
+    async scanStart() {
 
         this.nim?.makeRequest(this.nim.api.scan, {
             method: 'POST',
-            data
+            data: {
+                cidr: this.scanNetwork,
+                ports: this.scanPorts
+            }
         })
             .then(resp => {
                 // just log that the scan is running?
                 this.logger.debug('nim scan job start', resp);
+            })
+            .catch( err => {
+                
+                this.logger.debug('nim scan job start failed', err);
             });
 
     }

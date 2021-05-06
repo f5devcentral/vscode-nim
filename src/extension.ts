@@ -224,6 +224,7 @@ export function activate(context: ExtensionContext) {
         // item should be inventory instance
         window.showInputBox({
             prompt: 'input file name (including path)',
+            value: '/etc/nginx/test.conf',
             placeHolder: '/etc/nginx/nginx.conf'
         }).then(filePath => {
             if (filePath) {
@@ -270,7 +271,7 @@ export function activate(context: ExtensionContext) {
         const pathy = item.uri.path.split('/');
         const hostname = pathy.splice(1, 1);
 
-        
+        // need to fetch/update files from instance before continueing (or at least check since files don't get populated till the view item is expanded)
 
         const files: InstanceFiles[] = inventoryTree.instFiles[hostname[0]].map(el => {
             const stat = ngxFS.stat(Uri.parse(`ngx:/${hostname[0]}${el}`));
@@ -286,8 +287,8 @@ export function activate(context: ExtensionContext) {
         if (item.newFile) {
             // append new file to all the existing files
             files.push({
-                name: item.uri,
-                contents: Buffer.from('').toString('base64'),
+                name: pathy.join('/'),
+                contents: Buffer.from('# beginning of a new nginx file').toString('base64'),
                 created: new Date().toISOString()
             });
         }
@@ -313,6 +314,33 @@ export function activate(context: ExtensionContext) {
             });
 
     }));
+
+    context.subscriptions.push(commands.registerCommand('nginx.deleteConfig', (item) => {
+        // window.showTextDocument( Uri.parse(item) );
+        if (!nim) { return; };
+
+        const uri = item.command.arguments[0];
+
+        // find and delete the entry in the tree view
+        const pathy = Uri.parse(uri).path.split('/');
+        const hostname = pathy.splice(1, 1);
+        const entry = inventoryTree.instFiles[hostname[0]].indexOf(pathy.join('/'));
+        inventoryTree.instFiles[hostname[0]].splice(entry, 1);
+
+        try {
+            // delete file from ngx, then call post configs function
+            ngxFS.delete(Uri.parse(uri));
+        } catch (e) {
+            debugger;
+        }
+        commands.executeCommand('nginx.postConfigFile', {
+            uri: Uri.parse(uri),
+            stat: item.deviceId,
+        });
+        // inventoryTree.refresh();
+
+    }));
+
 
     context.subscriptions.push(commands.registerCommand('nginx.analyzeConfigs', (item) => {
         // window.showTextDocument( Uri.parse(item) );
@@ -408,13 +436,16 @@ export function activate(context: ExtensionContext) {
     }));
 
     context.subscriptions.push(commands.registerCommand('nim.scanStart', async () => {
-        await getText()
-            .then(async text => {
-                await scanTree.scanStart(text);
-            })
-            .catch(err => {
-                logger.error('nim.scanStart failed', err);
-            });
+        
+        await scanTree.scanStart();
+
+        // await getText()
+        //     .then(async text => {
+        //         await scanTree.scanStart(text);
+        //     })
+        //     .catch(err => {
+            //         logger.error('nim.scanStart failed', err);
+            //     });
     }));
 
 

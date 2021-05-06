@@ -113,6 +113,10 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
                         const uri = Uri.parse(path.join(element.label, el.name));
 
+                        if(!el.contents) {
+                            debugger;
+                        }
+
                         this.ngxFs.loadFile(uri, Buffer.from(el.contents, 'base64'), element.deviceId);
 
                         const txt = jsYaml.dump({
