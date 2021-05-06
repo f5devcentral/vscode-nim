@@ -374,6 +374,12 @@ export function activate(context: ExtensionContext) {
         // if item type === Uri from editor context
         // or if item type === viewItem from view context
 
+        if(!item.deviceId) {
+            // got uri item from button top right of editor, not from view item
+            item.deviceId = ngxFS.stat(item).id;
+            // debugger;
+        }
+
         const api = `${nim.api.instances}/${item.deviceId}/config/publish`;
 
         nim.makeRequest(api, {

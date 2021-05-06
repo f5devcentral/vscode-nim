@@ -80,7 +80,7 @@ export class FsProvider implements FileSystemProvider {
 
     // --- manage file metadata
 
-    stat(uri: Uri): FileStat {
+    stat(uri: Uri): File {
         return this.lookup(uri, false);
     }
 
