@@ -9,6 +9,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ---
 
+## [0.4.0] - (05-06-2021)
+
+### Modified
+
+- fixed publish button on top right of editor
+
+---
+
 ## [0.3.0] - (05-05-2021)
 
 ### Modified
