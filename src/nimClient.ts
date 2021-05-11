@@ -133,6 +133,7 @@ export class NimClient {
 
         // re-assign parent this objects needed within the parent instance objects...
         const events = this.events;
+        const device = this.host.device;
 
         // ---- https://github.com/axios/axios#interceptors
         // Add a request interceptor
@@ -166,10 +167,13 @@ export class NimClient {
             // if we got a failed password response
             if (
                 err.response?.status === 401 &&
-                err.response?.data.message === 'Authentication failed.'
+                err.response?.statusText === 'Unauthorized'
             ) {
                 // fire failed password event so upper logic can clear details
-                events.emit('failedAuth', err.response.data);
+                events.emit('failedAuth', {
+                    device,
+                    err: err.response.data
+                });
             }
 
             // Do something with response error

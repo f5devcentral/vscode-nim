@@ -20,8 +20,9 @@ import {
     window
 } from 'vscode';
 import keytar from "keytar";
+import Logger from "f5-conx-core/dist/logger";
 
-
+const logger = Logger.getLogger();
 
 // todo: use new vscode integrated secretes api (it's baked in keytar...)
 // https://stackoverflow.com/questions/66568692/how-to-use-the-vscode-secretstorage
@@ -32,7 +33,32 @@ import keytar from "keytar";
 
 export async function savePassword (device: string, password: string) {
     // logger
-    return await keytar.setPassword('nginxHosts', device, password);
+    return await keytar.setPassword('nimHosts', device, password);
+}
+
+
+export async function clearPassword (device?: string) {
+    // logger
+    // return await keytar.setPassword('nimHosts', device, password);
+    if (device) {
+
+        // passed in from view click or deviceClient
+        logger.debug('CLEARING KEYTAR PASSWORD CACHE for', device);
+        return await keytar.deletePassword('nimHosts', device);
+
+    } else {
+
+        // get list of items in keytar for the 'f5Hosts' service
+        logger.debug('CLEARING KEYTAR PASSWORD CACHE');
+        await keytar.findCredentials('nimHosts').then(list => {
+            // map through and delete all
+            list.map(item => keytar.deletePassword('nimHosts', item.account));
+        });
+        /**
+         * future: setup clear all to return an array of touples to show which
+         *  device passwords got cleared
+         */
+    }
 }
 
 /**
@@ -43,7 +69,7 @@ export async function savePassword (device: string, password: string) {
 
     // logger.debug(`getPassword Device: ${device}`);
     
-    let password = await keytar.getPassword('nginxHosts', device);
+    let password = await keytar.getPassword('nimHosts', device);
     
     // logger.debug(`IS PASSWORD IN KEYTAR?: ${password}`);
     if (!password) {

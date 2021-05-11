@@ -36,7 +36,7 @@ import { scanTreeProvider } from './scanTreeProvider';
 import { NimClient } from './nimClient';
 import { EventEmitter } from 'events';
 
-import { getText } from './utils';
+import { clearPassword, getText } from './utils';
 import { NgxFsProvider } from './ngxFileSystem';
 import path from 'path';
 import { InstanceFiles } from './nimModels';
@@ -72,6 +72,16 @@ export function activate(context: ExtensionContext) {
         .on('log-info', msg => logger.info(msg))
         .on('log-warn', msg => logger.warning(msg))
         .on('log-error', msg => logger.error(msg));
+
+    // hook up failed auth event
+    eventer.on('failedAuth', x => {
+        // log the error
+        logger.error('auth failed', x.err);
+        // clear the password
+        clearPassword(x.device);
+        // call disconnect
+        commands.executeCommand('nginx.disConnect');
+    });
 
     const settings = new Settings(context);
 
@@ -374,7 +384,7 @@ export function activate(context: ExtensionContext) {
         // if item type === Uri from editor context
         // or if item type === viewItem from view context
 
-        if(!item.deviceId) {
+        if (!item.deviceId) {
             // got uri item from button top right of editor, not from view item
             item.deviceId = ngxFS.stat(item).id;
             // debugger;
@@ -442,7 +452,7 @@ export function activate(context: ExtensionContext) {
     }));
 
     context.subscriptions.push(commands.registerCommand('nim.scanStart', async () => {
-        
+
         await scanTree.scanStart();
 
         // await getText()
@@ -450,8 +460,8 @@ export function activate(context: ExtensionContext) {
         //         await scanTree.scanStart(text);
         //     })
         //     .catch(err => {
-            //         logger.error('nim.scanStart failed', err);
-            //     });
+        //         logger.error('nim.scanStart failed', err);
+        //     });
     }));
 
 
