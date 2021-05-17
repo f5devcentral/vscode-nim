@@ -35,6 +35,7 @@ import {
 } from 'vscode';
 import { NimClient } from './nimClient';
 import Settings, { NginxHost } from './settings';
+import { clearPassword } from './utils';
 
 // icon listing for addin icons to key elements
 // https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
@@ -70,7 +71,7 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 	 * 
 	 */
 	async loadHosts(): Promise<void> {
-		this.nginxHosts = workspace.getConfiguration().get('f5.nginx.hosts') || [];
+		this.nginxHosts = workspace.getConfiguration().get('f5.nim.hosts') || [];
 	}
 
 	/**
@@ -78,7 +79,7 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 	 */
 	async saveHosts(): Promise<void> {
 		await workspace.getConfiguration()
-			.update('f5.nginx.hosts', this.nginxHosts, ConfigurationTarget.Global);
+			.update('f5.nim.hosts', this.nginxHosts, ConfigurationTarget.Global);
 	}
 
 	/**
@@ -127,15 +128,22 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
                 const tooltip = new MarkdownString(`## ${item.device}\n---\n`)
                 .appendCodeblock(jsYaml.dump(item), 'yaml');
 
+				let description = 'none';
+				for (const [key, value] of Object.entries(item.auth)) {
+					description = `${key}: ${value}`;
+				}
+
+				// const auth1 = item.auth
+
 				const treeItem = new NginxHostTreeItem(
 					(item.label || item.device),
-					'description...',
+					description,
 					tooltip,
 					this.green,
 					'host',
 					TreeItemCollapsibleState.None,
 					{
-						command: 'nginx.connect',
+						command: 'nim.connect',
 						title: 'hostTitle',
 						arguments: [item]
 					}
@@ -154,8 +162,15 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 		if (!newHost) {
 			// attempt to get user to input new device
 			newHost = await window.showInputBox({
-				prompt: 'Device/NGINX/Host',
-				placeHolder: '<host/ip>',
+				prompt: 'NIM-Host with user',
+				placeHolder: '<user>@<host/ip>',
+				validateInput: function(value) {
+					const [ authUser, host] = value.split('@');
+					if (!authUser || !host) {
+						return 'host or user not detected, use user@host/ip format';
+					}
+					// return value;
+				},
 				ignoreFocusOut: true
 			})
 				.then(el => {
@@ -167,16 +182,18 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
 				});
 		}
 
+		const [ authUser, host] = newHost.split('@');
+
 		// quick-n-dirty way, stringify the entire hosts config and search it for the host we are adding
 		const devicesString = JSON.stringify(this.nginxHosts);
 
-		if (!devicesString.includes(`\"${newHost}\"`) && this.deviceRex.test(newHost)) {
-			this.nginxHosts.push({ device: newHost });
+		if (!devicesString.includes(`\"${host}\"`) && this.deviceRex.test(host)) {
+			this.nginxHosts.push({ device: host, auth: { basic: authUser } });
 			this.saveHosts();
 			// wait(500, this.refresh());
-			return `${newHost} added to device configuration`;
+			return `${host} added to device configuration`;
 		} else {
-			this.logger.error(`${newHost} exists or invalid format: <user>@<host/ip>:<port>`);
+			this.logger.error(`${host} exists or invalid format: <user>@<host/ip>:<port>`);
 			return 'FAILED - Already exists or invalid format: <user>@<host/ip>';
 		}
 	}
@@ -224,11 +241,22 @@ export class NginxHostTreeProvider implements TreeDataProvider<NginxHostTreeItem
     async removeDevice(hostID: NginxHostTreeItem) {
 		this.logger.debug(`Remove Host command:`, hostID);
 		
-		const newNginxHosts = this.nginxHosts.filter((item: NginxHost) => (item.device || item.label) !== hostID.label);
+		const newNginxHosts = this.nginxHosts.filter((item: NginxHost) => {
+			// return (item.device || item.label) === hostID.label ? false : true;
+			if(item.device === hostID.label) {
+				clearPassword(item.device);	// clear cached password for device
+				return false;
+			} else if (item.label === hostID.label){
+				clearPassword(item.device);	// clear cached password for device
+				return false;
+			} else {
+				return true;
+			}
+		});
 		
 		if (this.nginxHosts.length === (newNginxHosts.length + 1)) {
 			this.logger.debug('device removed');
-			// this.clearPassword(hostID.label);	// clear cached password for device
+			// clearPassword(hostID.label);	// clear cached password for device
 			this.nginxHosts = newNginxHosts;
 			this.saveHosts();
 			// wait(500, this.refresh());

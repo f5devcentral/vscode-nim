@@ -9,6 +9,20 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ---
 
+## [0.5.0] - (05-17-2021)
+
+### Added/Modified
+
+- updated more icons
+- failed auth response now clears password and disconnects
+- Add host button
+  - accepts user@host format for easy add
+- Fixed host remove button
+- Fixed host edit function
+- updating most naming from nginx to nim
+
+---
+
 ## [0.4.0] - (05-06-2021)
 
 ### Modified

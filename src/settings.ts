@@ -25,7 +25,7 @@ export type NginxHost = {
     device: string;
     label?: string;
     port?: number;
-    auth?: {
+    auth: {
         /**
          * basic auth user string
          * -- will prompt for password
@@ -69,8 +69,8 @@ export default class Settings {
      */
     async load() {
 
-        this.hosts = workspace.getConfiguration().get('f5.nginx.hosts') || [];
-        process.env.F5_CONX_CORE_LOG_LEVEL = workspace.getConfiguration().get('f5.nginx.logLevel', 'INFO');
+        this.hosts = workspace.getConfiguration().get('f5.nim.hosts') || [];
+        process.env.F5_CONX_CORE_LOG_LEVEL = workspace.getConfiguration().get('f5.nim.logLevel', 'INFO');
         this.logLevel = process.env.F5_CONX_CORE_LOG_LEVEL;
     }
 

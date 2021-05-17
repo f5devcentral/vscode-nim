@@ -56,7 +56,7 @@ if (!process.env.F5_CONX_CORE_LOG_LEVEL) {
 }
 
 // create OUTPUT channel
-const f5OutputChannel = window.createOutputChannel('nginx');
+const f5OutputChannel = window.createOutputChannel('nim');
 
 // inject vscode output into logger
 logger.output = function (log: string) {
@@ -80,7 +80,7 @@ export function activate(context: ExtensionContext) {
         // clear the password
         clearPassword(x.device);
         // call disconnect
-        commands.executeCommand('nginx.disConnect');
+        commands.executeCommand('nim.disConnect');
     });
 
     const settings = new Settings(context);
@@ -90,13 +90,13 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidChangeConfiguration(() => {
-        logger.info('NGINX EXTENSION SETTINGS CHANGED!');
+        logger.info('NIM EXTENSION SETTINGS CHANGED!');
         settings.load();
         nginxHostsTree.refresh();
     });
 
     // todo: add extra package details!
-    logger.info(`nginx Extension Host details: `, {
+    logger.info(`nim Extension Host details: `, {
         hostOS: os.type(),
         platform: os.platform(),
         release: os.release(),
@@ -119,27 +119,31 @@ export function activate(context: ExtensionContext) {
         }
     });
 
-    context.subscriptions.push(commands.registerCommand('nginx.refreshHostsTree', () => {
+    context.subscriptions.push(commands.registerCommand('nim.refreshHostsTree', () => {
         nginxHostsTree.refresh();
     }));
 
-    context.subscriptions.push(commands.registerCommand('nginx.addHost', async (newHost) => {
-
-        commands.executeCommand('workbench.action.openSettingsJson', 'nginx');
-        // return await nginxHostsTree.addDevice(newHost);
+    context.subscriptions.push(commands.registerCommand('nim.config', async (newHost) => {
+        commands.executeCommand('workbench.action.openSettingsJson', '@ext:f5.nim.hosts');
     }));
 
-    context.subscriptions.push(commands.registerCommand('nginx.removeHost', async (hostID) => {
+    context.subscriptions.push(commands.registerCommand('nim.addHost', async (newHost) => {
+
+        // commands.executeCommand('workbench.action.openSettingsJson', '@ext:f5.nim.hosts');
+        return await nginxHostsTree.addDevice(newHost);
+    }));
+
+    context.subscriptions.push(commands.registerCommand('nim.removeHost', async (hostID) => {
         return await nginxHostsTree.removeDevice(hostID);
     }));
 
-    context.subscriptions.push(commands.registerCommand('nginx.editHost', async (hostID) => {
+    context.subscriptions.push(commands.registerCommand('nim.editHost', async (hostID) => {
         return await nginxHostsTree.editDevice(hostID);
     }));
 
-    context.subscriptions.push(commands.registerCommand('nginx.connect', async (host: NginxHost) => {
+    context.subscriptions.push(commands.registerCommand('nim.connect', async (host: NginxHost) => {
 
-        commands.executeCommand('nginx.disConnect');
+        commands.executeCommand('nim.disConnect');
 
         // curl -sku ted:benrocks https://dc0bec8a-1378-477d-b1a1-af6f87fbd190.access.udf.f5.com/api/v0/about/license
 
@@ -181,7 +185,7 @@ export function activate(context: ExtensionContext) {
 
 
 
-    context.subscriptions.push(commands.registerCommand('nginx.disConnect', async (hostID) => {
+    context.subscriptions.push(commands.registerCommand('nim.disConnect', async (hostID) => {
 
         commands.executeCommand('setContext', 'nim.connected', false);
 

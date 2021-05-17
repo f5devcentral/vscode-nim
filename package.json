@@ -1,13 +1,18 @@
 {
-	"name": "vscode-nginx",
-	"displayName": "F5 NGINX",
-	"description": "NGINX Instance Manager integration",
-	"version": "0.4.0",
+	"name": "vscode-nim",
+	"displayName": "F5 NIM",
+	"description": "NGINX Instance Manager",
+	"version": "0.5.0",
 	"license": "Apache-2.0",
 	"publisher": "F5DevCentral",
+	"icon": "images/nim_logo.png",
+	"homepage": "https://github.com/f5devcentral/vscode-nim",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/f5devcentral/vscode-nginx"
+		"url": "https://github.com/f5devcentral/vscode-nim"
+	},
+	"bugs": {
+		"url": "https://github.com/f5devcentral/vscode-nim/issues"
 	},
 	"engines": {
 		"vscode": "^1.52.0"
@@ -27,17 +32,17 @@
 			}
 		],
 		"configuration": {
-			"title": "f5-nginx",
+			"title": "f5-nim",
 			"properties": {
-				"f5.nginx.hosts": {
+				"f5.nim.hosts": {
 					"type": "array",
-					"description": "NGINX Hosts details",
+					"description": "NIM Hosts details",
 					"items": {
 						"type": "object",
 						"properties": {
 							"device": {
 								"type": "string",
-								"description": "nginx dude to connect to",
+								"description": "nim to connect to",
 								"pattern": "^[\\w-.]+$"
 							},
 							"label": {
@@ -48,22 +53,9 @@
 								"description": "port to connect to nginx host"
 							},
 							"auth": {
-								"basic": {
-									"username": "string",
-									"password": "string"
-								},
-								"cert": {
-									"type": "string"
-								},
-								"token": {
-									"type": "object",
-									"username": {
-										"type": "string"
-									},
-									"password": {
-										"type": "string"
-									}
-								}
+								"basic": "string",
+								"cert": "string",
+								"token": "string"
 							},
 							"system": {
 								"type": "object"
@@ -77,7 +69,7 @@
 						"device"
 					]
 				},
-				"f5.nginx.logLevel": {
+				"f5.nim.logLevel": {
 					"type": "string",
 					"enum": [
 						"DEBUG",
@@ -92,14 +84,14 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "f5-nginx-view-container",
-					"title": "NGINX",
-					"icon": "images/NGINX-product-icon-white.svg"
+					"id": "f5-nim-view-container",
+					"title": "NIM",
+					"icon": "images/NGINX-Instance-Manager-icon_cutout.svg"
 				}
 			]
 		},
 		"views": {
-			"f5-nginx-view-container": [
+			"f5-nim-view-container": [
 				{
 					"id": "hostsView",
 					"name": "HOSTS"
@@ -118,92 +110,98 @@
 		},
 		"commands": [
 			{
-				"command": "nginx.refreshHostsTree",
+				"command": "nim.refreshHostsTree",
 				"title": "Refresh Devices",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "$(refresh)"
 			},
 			{
-				"command": "nginx.addHost",
+				"command": "nim.addHost",
+				"title": "Add Host",
+				"category": "NIM",
+				"icon": "$(add)"
+			},
+			{
+				"command": "nim.config",
 				"title": "Hosts Config",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "$(gear)"
 			},
 			{
-				"command": "nginx.editHost",
+				"command": "nim.editHost",
 				"title": "Edit Host",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "$(edit)"
 			},
 			{
-				"command": "nginx.removeHost",
+				"command": "nim.removeHost",
 				"title": "Remove Host",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "$(trash)"
 			},
 			{
-				"command": "nginx.connect",
+				"command": "nim.connect",
 				"title": "Connect to NIM",
-				"category": "NGINX"
+				"category": "NIM"
 			},
 			{
-				"command": "nginx.disConnect",
+				"command": "nim.disConnect",
 				"title": "Dis-Connect",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "$(debug-disconnect)"
 			},
 			{
 				"command": "nginx.refreshInventory",
 				"title": "Refresh Inventory",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "nginx.newConfig",
 				"title": "New Config",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "images/nim_newFile.svg"
 			},
 			{
 				"command": "nginx.saveConfigFile",
 				"title": "Save Config",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "images/nim_save.svg"
 			},
 			{
 				"command": "nginx.deleteConfig",
 				"title": "Delete Config",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "images/nim_trash.svg"
 			},
 			{
 				"command": "nginx.analyzeConfigs",
 				"title": "Analyze Configs",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "images/nim_analyze.svg"
 			},
 			{
 				"command": "nginx.publishConfigs",
 				"title": "Publish Configs",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "images/nim_upload_arrow.svg"
 			},
 			{
 				"command": "nginx.refreshScan",
 				"title": "Refresh Scan",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "nim.scanStart",
 				"title": "Start Scan",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "images/nim_scan.svg"
 			},
 			{
 				"command": "nginx.deleteScanServer",
 				"title": "Delete",
-				"category": "NGINX",
+				"category": "NIM",
 				"icon": "images/nim_trash.svg"
 			}
 		],
@@ -227,12 +225,17 @@
 			],
 			"view/title": [
 				{
-					"command": "nginx.addHost",
+					"command": "nim.config",
 					"when": "view == hostsView",
 					"group": "navigation"
 				},
 				{
-					"command": "nginx.refreshHostsTree",
+					"command": "nim.addHost",
+					"when": "view == hostsView",
+					"group": "navigation"
+				},
+				{
+					"command": "nim.refreshHostsTree",
 					"when": "view == hostsView",
 					"group": "navigation"
 				},
@@ -249,17 +252,17 @@
 			],
 			"view/item/context": [
 				{
-					"command": "nginx.editHost",
+					"command": "nim.editHost",
 					"when": "view == hostsView && viewItem == host",
 					"group": "inline"
 				},
 				{
-					"command": "nginx.disConnect",
+					"command": "nim.disConnect",
 					"when": "view == hostsView && viewItem == host",
 					"group": "inline"
 				},
 				{
-					"command": "nginx.removeHost",
+					"command": "nim.removeHost",
 					"when": "view == hostsView && viewItem == host",
 					"group": "inline"
 				},

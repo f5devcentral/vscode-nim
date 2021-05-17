@@ -1,42 +1,26 @@
-# vscode-nginx
+# vscode-nim
 
-initial draft of vscode extension for nginx, mainly nginx instance manager (NIM)
+initial draft of vscode extension for Nginx Instance Manager (NIM)
 
-The idea is to have an extension for everything nginx, but would plugin or add on to the main vscode-f5 extension.  This would ensure that this extension has all the tools that come with the main vscode-f5 extension but not cluttered with all the tmos stuff.  So, whole new view with all nginx specific stuff.
+THIS IS EARLY RELEASE FOR INITIAL TESTING AND DEVELOPMENT
 
-All of this is very early stages but wanted to get a framework so others can see the options.
+Please see the following links for official documentation and trial licensing
 
-So, all the menu's, icons, and layout can/will change.  Looking for feedback on workflows and UI as we explore this integration more.
-
-Also, looking at the vscode marketplace, you will see a couple of extensions that may already handle some necessary functionality (language server), so we might need to look into how they solved some of these needs.
-
-I think the language server is going to be a big part and benefit of the config authoring process (like the irules/iapps/other nginx extensions)
+[NGINX Instance Manager - NGINX](https://www.nginx.com/products/nginx-instance-manager/)
 
 ## Overview
 
-Initial integration to be done through NIM
+NIM can be used to discover and manage nginx (OSS and plus) instances and config files
 
-<img src="./images/vscode-nim_3.22.2021_01.png" alt="drawing" width="80%"/>
-
-Another shot with the different views for inventory and scanning
-
-<img src="./images/vscode-nim_3.22.2021_withViews.png" alt="drawing" width="80%"/>
+<img src="images/vscode-nim_overview_5.17.2021.PNG" alt="drawing" width="80%"/>
 
 ## Getting Started
 
-in progress...
+Please open an RFE with any ideas or questions.
 
 ## Installation
 
-None at this time
-
-## Usage
-
-"this is not the extension your looking for..."
-
-## Development
-
-Know TS?
+This extension can be found via the vscode marketplace or the repo releases
 
 ## Support
 
