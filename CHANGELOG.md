@@ -9,6 +9,15 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ---
 
+## [0.6.0] - (10-28-2021)
+
+### Added
+
+- added reset button like NIM UI
+  - This button tells NIM to pull all new configs from instance
+
+---
+
 ## [0.5.0] - (05-17-2021)
 
 ### Added/Modified
