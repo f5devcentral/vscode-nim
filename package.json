@@ -2,7 +2,7 @@
 	"name": "vscode-nim",
 	"displayName": "F5 NIM",
 	"description": "NGINX Instance Manager",
-	"version": "0.5.0",
+	"version": "0.6.0",
 	"license": "Apache-2.0",
 	"publisher": "F5DevCentral",
 	"icon": "images/nim_logo.png",
