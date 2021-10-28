@@ -233,6 +233,22 @@ export function activate(context: ExtensionContext) {
         window.showTextDocument(Uri.parse(item));
     }));
 
+    context.subscriptions.push(commands.registerCommand('nim.resetConfigs', (item) => {
+
+        if(item.label) {
+            // click from tree icon
+            inventoryTree.resetInstanceConfigs = item.label;
+        }
+
+        if(item.path) {
+            // click from editor icon -> extract host/label from filePath
+            inventoryTree.resetInstanceConfigs = item.path.split('/')[1];
+        }
+
+        inventoryTree.refresh();
+
+    }));
+
     context.subscriptions.push(commands.registerCommand('nginx.newConfig', (item) => {
 
         // item should be inventory instance
