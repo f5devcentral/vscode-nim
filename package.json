@@ -2,7 +2,7 @@
 	"name": "vscode-nim",
 	"displayName": "F5 NIM",
 	"description": "NGINX Instance Manager",
-	"version": "0.5.0",
+	"version": "0.6.0",
 	"license": "Apache-2.0",
 	"publisher": "F5DevCentral",
 	"icon": "images/nim_logo.png",
@@ -163,6 +163,12 @@
 				"icon": "images/nim_newFile.svg"
 			},
 			{
+				"command": "nim.resetConfigs",
+				"title": "Reset Config",
+				"category": "NIM",
+				"icon": "images/nim_reset.svg"
+			},
+			{
 				"command": "nginx.saveConfigFile",
 				"title": "Save Config",
 				"category": "NIM",
@@ -207,6 +213,11 @@
 		],
 		"menus": {
 			"editor/title": [
+				{
+					"command": "nim.resetConfigs",
+					"group": "navigation",
+					"when": "resourceScheme == ngx"
+				},
 				{
 					"command": "nginx.saveConfigFile",
 					"group": "navigation",
@@ -268,6 +279,11 @@
 				},
 				{
 					"command": "nginx.newConfig",
+					"when": "view == inventoryView && viewItem == instance",
+					"group": "inline"
+				},
+				{
+					"command": "nim.resetConfigs",
 					"when": "view == inventoryView && viewItem == instance",
 					"group": "inline"
 				},

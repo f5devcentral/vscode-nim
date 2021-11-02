@@ -61,6 +61,11 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
     ngxFs: NgxFsProvider;
     instFiles: IstFiles = {};
 
+    /**
+     * reset the instance ID configs to for nim to get the latest from instance
+     */
+    resetInstanceConfigs: string | undefined;
+
     private ngxIcon = path.join(__dirname, "..", "images", "NGINX-product-icon.svg");
     private ngxPlusIcon = path.join(__dirname, "..", "images", "NGINX-Plus-product-icon-RGB.svg");
 
@@ -97,8 +102,17 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
         if (element) {
 
+            // update url for config reset or nim
+            const url = (this.resetInstanceConfigs === element.label) ?
+                `${this.nim.api.instances}/${element.deviceId}/config?current=true` : `${this.nim.api.instances}/${element.deviceId}/config`;
+
+            // clear reset flag if set
+            if (this.resetInstanceConfigs === element.label) {
+                this.resetInstanceConfigs = undefined;
+            }
+
             // get children of selected item
-            await this.nim.makeRequest(`${this.nim.api.instances}/${element.deviceId}/config`)
+            await this.nim.makeRequest(url)
                 .then(resp => {
 
                     // start building file list for host
@@ -113,7 +127,7 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
                         const uri = Uri.parse(path.join(element.label, el.name));
 
-                        if(!el.contents) {
+                        if (!el.contents) {
                             debugger;
                         }
 
@@ -169,8 +183,8 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
                     const tooltip = new MarkdownString()
                         .appendCodeblock(txt, 'yaml');
 
-                    const icon = el.nginx.type === 'plus' 
-                    ? this.ngxPlusIcon : this.ngxIcon;
+                    const icon = el.nginx.type === 'plus'
+                        ? this.ngxPlusIcon : this.ngxIcon;
 
                     treeItems.push(new InvTreeItem(
                         el.hostname,
@@ -187,14 +201,11 @@ export class InventoryTreeProvider implements TreeDataProvider<InvTreeItem> {
 
         }
         return treeItems;
-
-
-
     }
 
 
     /**
-     * fetch bigiq managed device information
+     * fetch nginx instance information
      */
     async getInventory() {
         this.inventory = undefined;
